@@ -121,14 +121,19 @@ EOF
 )
 
   # Create issue
-  # Join labels by comma
-  IFS="," read -r -a labels_csv <<< "${labels[*]}"
   echo "Creating issue: ${title}"
+  
+  # Build label arguments with proper quoting
+  label_args=()
+  for label in "${labels[@]}"; do
+    label_args+=("--label" "${label}")
+  done
+  
   gh issue create \
     --repo "${REPO}" \
     --title "${title}" \
     --body "${issue_body}" \
-    --label "${labels[@]}" >/dev/null
+    "${label_args[@]}" >/dev/null
 
   # Reset HU vars
   hu_code=""
@@ -157,25 +162,25 @@ while IFS='' read -r line || [[ -n "$line" ]]; do
 
   # Priority
   if [[ "$line" =~ ^\*\*Prioridad:\*\*\ (.*)$ ]]; then
-    priority="${BASH_REMATCH[1]}"
+    priority=$(echo "${BASH_REMATCH[1]}" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
     continue
   fi
 
   # Estimate
   if [[ "$line" =~ ^\*\*Estimación:\*\*\ (.*)$ ]]; then
-    estimate="${BASH_REMATCH[1]}"
+    estimate=$(echo "${BASH_REMATCH[1]}" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
     continue
   fi
 
   # Start/End gherkin block
-  if [[ "$line" =~ ^```gherkin$ ]]; then
+  if [[ "$line" =~ ^\`\`\`gherkin$ ]]; then
     in_gherkin=1
-    body+=$'```gherkin\n'
+    body+=$'\`\`\`gherkin\n'
     continue
   fi
-  if [[ "$line" =~ ^```$ ]] && [[ $in_gherkin -eq 1 ]]; then
+  if [[ "$line" =~ ^\`\`\`$ ]] && [[ $in_gherkin -eq 1 ]]; then
     in_gherkin=0
-    body+=$'```\n'
+    body+=$'\`\`\`\n'
     continue
   fi
 

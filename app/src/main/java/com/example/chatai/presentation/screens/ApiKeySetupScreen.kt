@@ -17,15 +17,17 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.chatai.ui.theme.ChatAiTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ApiKeySetupScreen(
     onApiKeyConfigured: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    viewModel: ApiKeySetupViewModel = hiltViewModel()
 ) {
-    var apiKey by remember { mutableStateOf("") }
+    val uiState by viewModel.uiState.collectAsState()
     
     Column(
         modifier = modifier
@@ -52,7 +54,7 @@ fun ApiKeySetupScreen(
                     fontSize = MaterialTheme.typography.bodyLarge.fontSize
                 )
             ) {
-                append("Necesitas una API key de OpenRouter para usar la aplicación. ")
+                append("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 ")
             }
             
             withStyle(
@@ -81,32 +83,95 @@ fun ApiKeySetupScreen(
         Spacer(modifier = Modifier.height(32.dp))
         
         OutlinedTextField(
-            value = apiKey,
-            onValueChange = { apiKey = it },
+            value = uiState.apiKey,
+            onValueChange = { 
+                viewModel.onApiKeyChanged(it)
+                viewModel.clearMessages()
+            },
             label = { Text("API Key") },
             placeholder = { Text("sk-or-v1-...") },
             modifier = Modifier.fillMaxWidth(),
-            singleLine = true
+            singleLine = true,
+            isError = uiState.errorMessage != null
         )
+        
+        // Mostrar mensajes de error, éxito o validación
+        uiState.errorMessage?.let { error ->
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = error,
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
+        
+        uiState.successMessage?.let { success ->
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = success,
+                color = MaterialTheme.colorScheme.primary,
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
+        
+        uiState.validationMessage?.let { validation ->
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = validation,
+                color = MaterialTheme.colorScheme.primary,
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
         
         Spacer(modifier = Modifier.height(24.dp))
         
+        // Botón de validar
+        if (uiState.apiKey.isNotBlank()) {
+            OutlinedButton(
+                onClick = { viewModel.validateApiKey() },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(48.dp),
+                enabled = !uiState.isLoading
+            ) {
+                if (uiState.isLoading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(16.dp),
+                        strokeWidth = 2.dp
+                    )
+                } else {
+                    Text("Validar API Key")
+                }
+            }
+            
+            Spacer(modifier = Modifier.height(16.dp))
+        }
+        
+        // Botón de guardar
         Button(
-            onClick = { 
-                // Por ahora, simular que se configuró la API key
-                onApiKeyConfigured()
-            },
+            onClick = { viewModel.saveApiKey(onApiKeyConfigured) },
             modifier = Modifier
                 .fillMaxWidth()
                 .height(56.dp),
             shape = RoundedCornerShape(12.dp),
-            enabled = apiKey.isNotBlank()
+            enabled = uiState.apiKey.isNotBlank() && !uiState.isLoading
         ) {
-            Text(
-                text = "Guardar API Key",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold
-            )
+            if (uiState.isLoading) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(20.dp),
+                    strokeWidth = 2.dp,
+                    color = MaterialTheme.colorScheme.onPrimary
+                )
+            } else {
+                Text(
+                    text = "Guardar API Key",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
         }
     }
 }

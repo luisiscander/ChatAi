@@ -2,12 +2,19 @@ package com.example.chatai.presentation.screens
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.ClickableText
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.chatai.ui.theme.ChatAiTheme
@@ -37,12 +44,38 @@ fun ApiKeySetupScreen(
         
         Spacer(modifier = Modifier.height(16.dp))
         
-        Text(
-            text = "Necesitas una API key de OpenRouter para usar la aplicación. " +
-                    "Puedes obtenerla en openrouter.ai/keys",
-            style = MaterialTheme.typography.bodyLarge,
-            textAlign = TextAlign.Center,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+        val uriHandler = LocalUriHandler.current
+        val annotatedText = buildAnnotatedString {
+            withStyle(
+                style = SpanStyle(
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontSize = MaterialTheme.typography.bodyLarge.fontSize
+                )
+            ) {
+                append("Necesitas una API key de OpenRouter para usar la aplicación. ")
+            }
+            
+            withStyle(
+                style = SpanStyle(
+                    color = MaterialTheme.colorScheme.primary,
+                    textDecoration = TextDecoration.Underline,
+                    fontSize = MaterialTheme.typography.bodyLarge.fontSize
+                )
+            ) {
+                append("Puedes obtenerla aquí")
+            }
+        }
+        
+        ClickableText(
+            text = annotatedText,
+            style = MaterialTheme.typography.bodyLarge.copy(
+                textAlign = TextAlign.Center
+            ),
+            onClick = { offset ->
+                // Abrir el enlace a OpenRouter
+                uriHandler.openUri("https://openrouter.ai/keys")
+            },
+            modifier = Modifier.fillMaxWidth()
         )
         
         Spacer(modifier = Modifier.height(32.dp))

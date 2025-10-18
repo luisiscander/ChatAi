@@ -6,35 +6,40 @@ import com.example.chatai.domain.usecase.OnboardingStatus
 import com.example.chatai.presentation.screens.ApiKeySetupScreen
 import com.example.chatai.presentation.screens.MainScreen
 import com.example.chatai.presentation.screens.OnboardingScreen
+import com.example.chatai.presentation.screens.SplashScreen
 
 @Composable
 fun NavigationManager(
     onboardingStatus: OnboardingStatus?,
+    isLoading: Boolean,
     onContinueClicked: () -> Unit,
     onApiKeyConfigured: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    when (onboardingStatus) {
-        OnboardingStatus.ShowOnboarding -> {
+    when {
+        isLoading -> {
+            SplashScreen(modifier = modifier)
+        }
+        onboardingStatus == OnboardingStatus.ShowOnboarding -> {
             OnboardingScreen(
                 onContinueClicked = onContinueClicked,
                 modifier = modifier
             )
         }
-        OnboardingStatus.ShowApiKeySetup -> {
+        onboardingStatus == OnboardingStatus.ShowApiKeySetup -> {
             ApiKeySetupScreen(
                 onApiKeyConfigured = onApiKeyConfigured,
                 modifier = modifier
             )
         }
-        OnboardingStatus.ShowMainApp -> {
+        onboardingStatus == OnboardingStatus.ShowMainApp -> {
             MainScreen(
                 modifier = modifier
             )
         }
-        null -> {
-            // Mostrar pantalla de carga mientras se verifica el estado
-            MainScreen(modifier = modifier)
+        else -> {
+            // Fallback a splash screen
+            SplashScreen(modifier = modifier)
         }
     }
 }

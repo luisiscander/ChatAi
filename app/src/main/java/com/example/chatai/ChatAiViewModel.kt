@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay
 import javax.inject.Inject
 
 @HiltViewModel
@@ -20,11 +21,18 @@ class ChatAiViewModel @Inject constructor(
 
     private val _onboardingStatus = MutableStateFlow<OnboardingStatus?>(null)
     val onboardingStatus: StateFlow<OnboardingStatus?> = _onboardingStatus.asStateFlow()
+    
+    private val _isLoading = MutableStateFlow(true)
+    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
     fun checkOnboardingStatus() {
         viewModelScope.launch {
+            _isLoading.value = true
+            // Mostrar splash screen por al menos 2 segundos
+            delay(2000)
             val status = checkOnboardingStatusUseCase()
             _onboardingStatus.value = status
+            _isLoading.value = false
         }
     }
 

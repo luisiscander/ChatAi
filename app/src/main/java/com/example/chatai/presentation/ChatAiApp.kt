@@ -12,6 +12,7 @@ fun ChatAiApp(
     viewModel: ChatAiViewModel = hiltViewModel()
 ) {
     val onboardingStatus by viewModel.onboardingStatus.collectAsState()
+    val isLoading by viewModel.isLoading.collectAsState()
     
     LaunchedEffect(Unit) {
         viewModel.checkOnboardingStatus()
@@ -19,6 +20,7 @@ fun ChatAiApp(
     
     NavigationManager(
         onboardingStatus = onboardingStatus,
+        isLoading = isLoading,
         onContinueClicked = {
             viewModel.completeOnboarding()
         },

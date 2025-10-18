@@ -13,3 +13,8 @@
 .externalNativeBuild
 .cxx
 local.properties
+
+# Project documentation files
+STACK.md
+REQUIREMENTS.md
+AGENTS.md

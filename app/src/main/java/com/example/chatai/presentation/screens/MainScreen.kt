@@ -2,7 +2,7 @@ package com.example.chatai.presentation.screens
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Chat
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -25,7 +25,7 @@ fun MainScreen(
         verticalArrangement = Arrangement.Center
     ) {
         Icon(
-            imageVector = Icons.Default.Chat,
+            imageVector = Icons.Default.Star,
             contentDescription = "Chat AI Logo",
             modifier = Modifier.size(80.dp),
             tint = MaterialTheme.colorScheme.primary

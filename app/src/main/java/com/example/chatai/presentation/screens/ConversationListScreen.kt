@@ -6,13 +6,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Archive
-import androidx.compose.material.icons.filled.AutoAwesome
-import androidx.compose.material.icons.filled.Chat
-import androidx.compose.material.icons.filled.Help
-import androidx.compose.material.icons.filled.Pets
-import androidx.compose.material.icons.filled.Psychology
-import androidx.compose.material.icons.filled.SmartToy
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -45,7 +39,7 @@ fun ConversationListScreen(
                 title = { Text("Conversaciones") },
                 actions = {
                     IconButton(onClick = onShowArchived) {
-                        Icon(Icons.Default.Archive, contentDescription = "Ver archivadas")
+                        Icon(Icons.Default.Star, contentDescription = "Ver archivadas")
                     }
                 }
             )
@@ -105,7 +99,7 @@ fun EmptyConversationsState(
         verticalArrangement = Arrangement.Center
     ) {
         Icon(
-            imageVector = Icons.Default.Chat,
+            imageVector = Icons.Default.Star,
             contentDescription = "Sin conversaciones",
             modifier = Modifier.size(120.dp),
             tint = MaterialTheme.colorScheme.onSurfaceVariant
@@ -209,7 +203,7 @@ fun ConversationItem(
             
             // Botón de archivar
             IconButton(onClick = onArchive) {
-                Icon(Icons.Default.Archive, contentDescription = "Archivar")
+                Icon(Icons.Default.Star, contentDescription = "Archivar")
             }
         }
     }
@@ -217,13 +211,8 @@ fun ConversationItem(
 
 @Composable
 fun getModelIcon(modelType: ModelType): ImageVector {
-    return when (modelType) {
-        ModelType.GPT4 -> Icons.Default.SmartToy
-        ModelType.CLAUDE3_OPUS, ModelType.CLAUDE3_SONNET, ModelType.CLAUDE3_HAIKU -> Icons.Default.Psychology
-        ModelType.LLAMA3_70B, ModelType.LLAMA3_8B -> Icons.Default.Pets
-        ModelType.GEMINI_PRO -> Icons.Default.AutoAwesome
-        ModelType.UNKNOWN -> Icons.Default.Help
-    }
+    // Simplified - using Star icon for all models for now
+    return Icons.Default.Star
 }
 
 @Preview(showBackground = true)

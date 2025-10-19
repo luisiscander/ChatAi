@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import com.example.chatai.domain.usecase.OnboardingStatus
 import com.example.chatai.presentation.screens.ApiKeySetupScreen
+import com.example.chatai.presentation.screens.ConversationListScreen
 import com.example.chatai.presentation.screens.MainScreen
 import com.example.chatai.presentation.screens.OnboardingScreen
 import com.example.chatai.presentation.screens.SplashScreen
@@ -33,7 +34,16 @@ fun NavigationManager(
             )
         }
         onboardingStatus == OnboardingStatus.ShowMainApp -> {
-            MainScreen(
+            ConversationListScreen(
+                onConversationClick = { conversationId ->
+                    // TODO: Navigate to chat screen
+                },
+                onCreateConversation = {
+                    // TODO: Navigate to create conversation
+                },
+                onShowArchived = {
+                    // TODO: Show archived conversations
+                },
                 modifier = modifier
             )
         }

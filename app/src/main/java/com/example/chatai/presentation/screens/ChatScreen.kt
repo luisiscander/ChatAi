@@ -87,6 +87,7 @@ fun ChatScreen(
             onSendMessage = viewModel::sendMessage,
             validationResult = uiState.validationResult,
             isEnabled = uiState.isEnabled,
+            error = uiState.error,
             modifier = Modifier.fillMaxWidth()
         )
     }
@@ -189,11 +190,30 @@ fun MessageInput(
     onSendMessage: () -> Unit,
     validationResult: com.example.chatai.domain.usecase.MessageValidationResult,
     isEnabled: Boolean,
+    error: String? = null,
     modifier: Modifier = Modifier
 ) {
     Column(
         modifier = modifier.padding(16.dp)
     ) {
+        // Error message
+        error?.let { errorMessage ->
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.errorContainer
+                )
+            ) {
+                Text(
+                    text = errorMessage,
+                    color = MaterialTheme.colorScheme.onErrorContainer,
+                    modifier = Modifier.padding(12.dp),
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+        }
+        
         // Validation message
         when (validationResult) {
             is com.example.chatai.domain.usecase.MessageValidationResult.TooLong -> {

@@ -6,6 +6,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -32,14 +34,47 @@ fun ConversationListScreen(
     viewModel: ConversationListViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    var showSearch by remember { mutableStateOf(false) }
+    var searchText by remember { mutableStateOf("") }
     
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Conversaciones") },
+                title = { 
+                    if (showSearch) {
+                        SearchBar(
+                            searchText = searchText,
+                            onSearchTextChanged = { text ->
+                                searchText = text
+                                viewModel.searchConversations(text)
+                            },
+                            onSearchClicked = { viewModel.searchConversations(searchText) },
+                            onClearClicked = {
+                                searchText = ""
+                                viewModel.clearSearch()
+                                showSearch = false
+                            }
+                        )
+                    } else {
+                        Text("Conversaciones")
+                    }
+                },
                 actions = {
-                    IconButton(onClick = onShowArchived) {
-                        Icon(Icons.Default.Star, contentDescription = "Ver archivadas")
+                    if (showSearch) {
+                        IconButton(onClick = {
+                            searchText = ""
+                            viewModel.clearSearch()
+                            showSearch = false
+                        }) {
+                            Icon(Icons.Default.Clear, contentDescription = "Cerrar búsqueda")
+                        }
+                    } else {
+                        IconButton(onClick = { showSearch = true }) {
+                            Icon(Icons.Default.Search, contentDescription = "Buscar")
+                        }
+                        IconButton(onClick = onShowArchived) {
+                            Icon(Icons.Default.Star, contentDescription = "Ver archivadas")
+                        }
                     }
                 }
             )
@@ -63,6 +98,44 @@ fun ConversationListScreen(
                     CircularProgressIndicator()
                 }
             }
+            uiState.searchResult != null -> {
+                when (val result = uiState.searchResult) {
+                    is com.example.chatai.domain.usecase.SearchResult.Success -> {
+                        if (result.conversations.isEmpty()) {
+                            EmptySearchResultState(
+                                query = uiState.searchQuery,
+                                modifier = Modifier.padding(paddingValues)
+                            )
+                        } else {
+                            LazyColumn(
+                                contentPadding = paddingValues,
+                                modifier = Modifier.fillMaxSize(),
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                items(result.conversations) { conversation ->
+                                    ConversationItem(
+                                        conversation = conversation,
+                                        onClick = { onConversationClick(conversation.id) },
+                                        onArchive = { viewModel.archiveConversation(conversation.id) }
+                                    )
+                                }
+                            }
+                        }
+                    }
+                    is com.example.chatai.domain.usecase.SearchResult.NoResults -> {
+                        EmptySearchResultState(
+                            query = result.query,
+                            modifier = Modifier.padding(paddingValues)
+                        )
+                    }
+                    else -> {
+                        EmptySearchResultState(
+                            query = "",
+                            modifier = Modifier.padding(paddingValues)
+                        )
+                    }
+                }
+            }
             uiState.conversations.isEmpty() -> {
                 EmptyConversationsState(
                     onCreateConversation = onCreateConversation,
@@ -84,6 +157,75 @@ fun ConversationListScreen(
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+fun SearchBar(
+    searchText: String,
+    onSearchTextChanged: (String) -> Unit,
+    onSearchClicked: () -> Unit,
+    onClearClicked: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    OutlinedTextField(
+        value = searchText,
+        onValueChange = onSearchTextChanged,
+        modifier = modifier.fillMaxWidth(),
+        placeholder = { Text("Buscar conversaciones...") },
+        singleLine = true,
+        trailingIcon = {
+            if (searchText.isNotEmpty()) {
+                IconButton(onClick = onClearClicked) {
+                    Icon(Icons.Default.Clear, contentDescription = "Limpiar")
+                }
+            }
+        }
+    )
+}
+
+@Composable
+fun EmptySearchResultState(
+    query: String,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier.fillMaxSize(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Icon(
+            imageVector = Icons.Default.Search,
+            contentDescription = "Sin resultados",
+            modifier = Modifier.size(120.dp),
+            tint = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Text(
+            text = "No se encontraron conversaciones",
+            style = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Text(
+            text = "Intenta con otros términos de búsqueda",
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+
+        if (query.isNotEmpty()) {
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "Buscaste: \"$query\"",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.primary
+            )
         }
     }
 }

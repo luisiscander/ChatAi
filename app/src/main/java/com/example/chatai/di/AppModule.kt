@@ -55,16 +55,6 @@ object AppModuleProvider {
     
     @Provides
     @Singleton
-    fun provideCreateConversationUseCase(
-        conversationRepository: ConversationRepository,
-        userPreferencesRepository: UserPreferencesRepository,
-        @ApplicationContext context: Context
-    ): CreateConversationUseCase {
-        return CreateConversationUseCase(conversationRepository, userPreferencesRepository, context)
-    }
-    
-    @Provides
-    @Singleton
     fun provideGetConversationByIdUseCase(
         conversationRepository: ConversationRepository
     ): GetConversationByIdUseCase {

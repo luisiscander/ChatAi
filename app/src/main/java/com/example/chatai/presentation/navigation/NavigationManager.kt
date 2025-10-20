@@ -7,7 +7,6 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.chatai.domain.usecase.OnboardingStatus
-import com.example.chatai.presentation.ConversationNavigationViewModel
 import com.example.chatai.presentation.screens.ApiKeySetupScreen
 import com.example.chatai.presentation.screens.ChatScreen
 import com.example.chatai.presentation.screens.ConversationListScreen
@@ -44,8 +43,6 @@ fun NavigationManager(
     modifier: Modifier = Modifier
 ) {
     val navController = rememberNavController()
-    // Remove the ViewModel for now to simplify
-    // val conversationNavViewModel: ConversationNavigationViewModel = hiltViewModel()
     
     // Determine initial route based on onboarding status
     val startRoute = when {

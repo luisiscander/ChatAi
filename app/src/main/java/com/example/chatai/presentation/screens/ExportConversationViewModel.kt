@@ -27,7 +27,7 @@ class ExportConversationViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(
                 conversationId = conversationId,
-                conversationTitle = "Conversación ${conversationId.takeLast(8)}" // Simplified for now
+                conversationTitle = "Conversación ${conversationId.takeLast(8)}"
             )
         }
     }

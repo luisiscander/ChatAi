@@ -12,10 +12,13 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.example.chatai.R
 import com.example.chatai.domain.model.AiModel
 import com.example.chatai.ui.theme.ChatAiTheme
 
@@ -27,6 +30,7 @@ fun DefaultModelSettingsScreen(
     viewModel: DefaultModelSettingsViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val context = LocalContext.current
     
     LaunchedEffect(Unit) {
         viewModel.loadModels()
@@ -35,10 +39,10 @@ fun DefaultModelSettingsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Modelo por defecto") },
+                title = { Text(stringResource(R.string.default_model)) },
                 navigationIcon = {
                     IconButton(onClick = onBackClicked) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Volver")
+                        Icon(Icons.Default.ArrowBack, contentDescription = stringResource(R.string.back))
                     }
                 }
             )
@@ -51,7 +55,7 @@ fun DefaultModelSettingsScreen(
                 .padding(16.dp)
         ) {
             Text(
-                text = "Selecciona el modelo que se usará por defecto en nuevas conversaciones",
+                text = stringResource(R.string.select_default_model),
                 style = MaterialTheme.typography.titleMedium
             )
             
@@ -106,7 +110,7 @@ fun DefaultModelSettingsScreen(
                 ) {
                     Icon(Icons.Default.Check, contentDescription = null)
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Guardar")
+                    Text(stringResource(R.string.save))
                 }
             }
         }
@@ -153,14 +157,14 @@ private fun ModelOption(
                     style = MaterialTheme.typography.bodyLarge
                 )
                 Text(
-                    text = "ID: ${model.id}",
+                    text = stringResource(R.string.model_id, model.id),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 // Note: contextLength property doesn't exist in the current model
                 // This is just for preview purposes
                 Text(
-                    text = "Modelo disponible",
+                    text = stringResource(R.string.model_available),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

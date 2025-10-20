@@ -13,10 +13,12 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.example.chatai.R
 import com.example.chatai.domain.usecase.ExportFormat
 import com.example.chatai.ui.theme.ChatAiTheme
 
@@ -45,10 +47,10 @@ fun ExportConversationScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Exportar conversación") },
+                title = { Text(stringResource(R.string.export_conversation)) },
                 navigationIcon = {
                     IconButton(onClick = onBackClicked) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Volver")
+                        Icon(Icons.Default.ArrowBack, contentDescription = stringResource(R.string.back))
                     }
                 }
             )
@@ -70,7 +72,7 @@ fun ExportConversationScreen(
                         modifier = Modifier.padding(16.dp)
                     ) {
                         Text(
-                            text = "Conversación",
+                            text = stringResource(R.string.conversation),
                             style = MaterialTheme.typography.titleMedium
                         )
                         Text(
@@ -83,7 +85,7 @@ fun ExportConversationScreen(
             }
             
             Text(
-                text = "Selecciona el formato de exportación",
+                text = stringResource(R.string.select_export_format),
                 style = MaterialTheme.typography.titleMedium
             )
             
@@ -113,7 +115,7 @@ fun ExportConversationScreen(
                         modifier = Modifier.padding(16.dp)
                     ) {
                         Text(
-                            text = "Descripción del formato",
+                            text = stringResource(R.string.format_description),
                             style = MaterialTheme.typography.titleSmall
                         )
                         Spacer(modifier = Modifier.height(8.dp))
@@ -148,7 +150,7 @@ fun ExportConversationScreen(
                     Icon(Icons.Default.Share, contentDescription = null)
                 }
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("Exportar y compartir")
+                Text(stringResource(R.string.export_and_share))
             }
             
             // Error message
@@ -210,7 +212,7 @@ private fun FormatOption(
                     style = MaterialTheme.typography.bodyLarge
                 )
                 Text(
-                    text = "Archivo .${format.fileExtension}",
+                    text = stringResource(R.string.file_extension, format.fileExtension),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -219,11 +221,12 @@ private fun FormatOption(
     }
 }
 
+@Composable
 private fun getFormatDescription(format: ExportFormat): String {
     return when (format) {
-        ExportFormat.TEXT -> "Formato de texto plano simple. Incluye todos los mensajes con timestamps y información básica de la conversación."
-        ExportFormat.MARKDOWN -> "Formato Markdown con encabezados, formato de texto y bloques de código. Ideal para documentación o compartir en plataformas que soporten Markdown."
-        ExportFormat.JSON -> "Formato JSON estructurado con toda la información de la conversación. Útil para análisis de datos o integración con otras aplicaciones."
+        ExportFormat.TEXT -> stringResource(R.string.format_text_description)
+        ExportFormat.MARKDOWN -> stringResource(R.string.format_markdown_description)
+        ExportFormat.JSON -> stringResource(R.string.format_json_description)
     }
 }
 
@@ -232,7 +235,7 @@ private fun getFormatDescription(format: ExportFormat): String {
 fun ExportConversationScreenPreview() {
     ChatAiTheme {
         ExportConversationScreen(
-            conversationId = "test",
+            conversationId = stringResource(R.string.test_conversation_id),
             onBackClicked = { }
         )
     }

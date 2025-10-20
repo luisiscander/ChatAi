@@ -16,11 +16,14 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.example.chatai.R
 import com.example.chatai.domain.model.ModelType
 import com.example.chatai.ui.theme.ChatAiTheme
 import java.text.SimpleDateFormat
@@ -38,6 +41,7 @@ fun ConversationListScreen(
     viewModel: ConversationListViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val context = LocalContext.current
     var showSearch by remember { mutableStateOf(false) }
     var searchText by remember { mutableStateOf("") }
     
@@ -60,7 +64,7 @@ fun ConversationListScreen(
                             }
                         )
                     } else {
-                        Text("Conversaciones")
+                        Text(stringResource(R.string.conversations))
                     }
                 },
                 actions = {
@@ -70,21 +74,21 @@ fun ConversationListScreen(
                             viewModel.clearSearch()
                             showSearch = false
                         }) {
-                            Icon(Icons.Default.Clear, contentDescription = "Cerrar búsqueda")
+                            Icon(Icons.Default.Clear, contentDescription = stringResource(R.string.close_search))
                         }
                     } else {
                         IconButton(onClick = { showSearch = true }) {
-                            Icon(Icons.Default.Search, contentDescription = "Buscar")
+                            Icon(Icons.Default.Search, contentDescription = stringResource(R.string.search))
                         }
                         IconButton(onClick = onShowArchived) {
-                            Icon(Icons.Default.Star, contentDescription = "Ver archivadas")
+                            Icon(Icons.Default.Star, contentDescription = stringResource(R.string.view_archived))
                         }
                         
                         // Settings menu
                         var showMenu by remember { mutableStateOf(false) }
                         Box {
                             IconButton(onClick = { showMenu = true }) {
-                                Icon(Icons.Default.MoreVert, contentDescription = "Configuración")
+                                Icon(Icons.Default.MoreVert, contentDescription = stringResource(R.string.settings))
                             }
                             
                             DropdownMenu(
@@ -92,7 +96,7 @@ fun ConversationListScreen(
                                 onDismissRequest = { showMenu = false }
                             ) {
                                 DropdownMenuItem(
-                                    text = { Text("Apariencia") },
+                                    text = { Text(stringResource(R.string.appearance_menu)) },
                                     leadingIcon = { Icon(Icons.Default.Star, contentDescription = null) },
                                     onClick = {
                                         onNavigateToThemeSettings()
@@ -100,7 +104,7 @@ fun ConversationListScreen(
                                     }
                                 )
                                 DropdownMenuItem(
-                                    text = { Text("Modelo por defecto") },
+                                    text = { Text(stringResource(R.string.default_model_menu)) },
                                     leadingIcon = { Icon(Icons.Default.Settings, contentDescription = null) },
                                     onClick = {
                                         onNavigateToDefaultModelSettings()
@@ -118,7 +122,7 @@ fun ConversationListScreen(
                 onClick = onCreateConversation,
                 containerColor = MaterialTheme.colorScheme.primary
             ) {
-                Icon(Icons.Default.Add, contentDescription = "Nueva conversación")
+                Icon(Icons.Default.Add, contentDescription = stringResource(R.string.new_conversation))
             }
         },
         modifier = modifier
@@ -207,12 +211,12 @@ fun SearchBar(
         value = searchText,
         onValueChange = onSearchTextChanged,
         modifier = modifier.fillMaxWidth(),
-        placeholder = { Text("Buscar conversaciones...") },
+        placeholder = { Text(stringResource(R.string.search_conversations_placeholder)) },
         singleLine = true,
         trailingIcon = {
             if (searchText.isNotEmpty()) {
                 IconButton(onClick = onClearClicked) {
-                    Icon(Icons.Default.Clear, contentDescription = "Limpiar")
+                    Icon(Icons.Default.Clear, contentDescription = stringResource(R.string.clear))
                 }
             }
         }
@@ -231,7 +235,7 @@ fun EmptySearchResultState(
     ) {
         Icon(
             imageVector = Icons.Default.Search,
-            contentDescription = "Sin resultados",
+            contentDescription = stringResource(R.string.no_results),
             modifier = Modifier.size(120.dp),
             tint = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -239,7 +243,7 @@ fun EmptySearchResultState(
         Spacer(modifier = Modifier.height(16.dp))
 
         Text(
-            text = "No se encontraron conversaciones",
+            text = stringResource(R.string.no_conversations_found),
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -248,7 +252,7 @@ fun EmptySearchResultState(
         Spacer(modifier = Modifier.height(8.dp))
 
         Text(
-            text = "Intenta con otros términos de búsqueda",
+            text = stringResource(R.string.try_other_search_terms),
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -256,7 +260,7 @@ fun EmptySearchResultState(
         if (query.isNotEmpty()) {
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = "Buscaste: \"$query\"",
+                text = stringResource(R.string.you_searched, query),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.primary
             )
@@ -276,7 +280,7 @@ fun EmptyConversationsState(
     ) {
         Icon(
             imageVector = Icons.Default.Star,
-            contentDescription = "Sin conversaciones",
+            contentDescription = stringResource(R.string.no_conversations),
             modifier = Modifier.size(120.dp),
             tint = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -284,7 +288,7 @@ fun EmptyConversationsState(
         Spacer(modifier = Modifier.height(16.dp))
         
         Text(
-            text = "No tienes conversaciones",
+            text = stringResource(R.string.no_conversations_message),
             style = MaterialTheme.typography.headlineSmall,
             color = MaterialTheme.colorScheme.onSurface
         )
@@ -292,7 +296,7 @@ fun EmptyConversationsState(
         Spacer(modifier = Modifier.height(8.dp))
         
         Text(
-            text = "Comienza una nueva conversación con IA",
+            text = stringResource(R.string.start_new_conversation),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -305,7 +309,7 @@ fun EmptyConversationsState(
         ) {
             Icon(Icons.Default.Add, contentDescription = null)
             Spacer(modifier = Modifier.width(8.dp))
-            Text("Crear conversación")
+            Text(stringResource(R.string.create_conversation))
         }
     }
 }
@@ -379,7 +383,7 @@ fun ConversationItem(
             
             // Botón de archivar
             IconButton(onClick = onArchive) {
-                Icon(Icons.Default.Star, contentDescription = "Archivar")
+                Icon(Icons.Default.Star, contentDescription = stringResource(R.string.archive))
             }
         }
     }

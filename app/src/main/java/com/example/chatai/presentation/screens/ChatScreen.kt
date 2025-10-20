@@ -15,11 +15,14 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.example.chatai.R
 import com.example.chatai.domain.model.Message
 import com.example.chatai.domain.usecase.MessageValidationResult
 import com.example.chatai.ui.theme.ChatAiTheme
@@ -36,6 +39,7 @@ fun ChatScreen(
     viewModel: ChatViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val context = LocalContext.current
     val listState = rememberLazyListState()
     var showDeleteDialog by remember { mutableStateOf(false) }
     var messageToDelete by remember { mutableStateOf<Message?>(null) }
@@ -77,12 +81,12 @@ fun ChatScreen(
                 title = { Text(uiState.conversationTitle) },
                 navigationIcon = {
                     IconButton(onClick = onBackClicked) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Volver")
+                        Icon(Icons.Default.ArrowBack, contentDescription = stringResource(R.string.back))
                     }
                 },
                 actions = {
                     IconButton(onClick = onNavigateToExportConversation) {
-                        Icon(Icons.Default.Share, contentDescription = "Exportar conversación")
+                        Icon(Icons.Default.Share, contentDescription = stringResource(R.string.export_conversation))
                     }
                 }
             )
@@ -165,7 +169,7 @@ fun ChatScreen(
                                 onClick = { viewModel.scrollToLatestMessage() }
                             ) {
                                 Text(
-                                    text = "Nuevo mensaje ↓",
+                                    text = stringResource(R.string.new_message_indicator),
                                     color = MaterialTheme.colorScheme.onPrimary
                                 )
                             }
@@ -204,8 +208,8 @@ fun ChatScreen(
                     showDeleteDialog = false
                     messageToDelete = null
                 },
-                title = { Text("Eliminar mensaje") },
-                text = { Text("¿Estás seguro de que quieres eliminar este mensaje?") },
+                title = { Text(stringResource(R.string.delete_message)) },
+                text = { Text(stringResource(R.string.confirm_delete_message)) },
                 confirmButton = {
                     TextButton(
                         onClick = {
@@ -216,7 +220,7 @@ fun ChatScreen(
                             messageToDelete = null
                         }
                     ) {
-                        Text("Eliminar")
+                        Text(stringResource(R.string.delete))
                     }
                 },
                 dismissButton = {
@@ -226,7 +230,7 @@ fun ChatScreen(
                             messageToDelete = null
                         }
                     ) {
-                        Text("Cancelar")
+                        Text(stringResource(R.string.cancel))
                     }
                 }
             )
@@ -288,7 +292,7 @@ fun MessageBubble(
             onDismissRequest = { showContextMenu = false }
         ) {
             DropdownMenuItem(
-                text = { Text("Copiar") },
+                text = { Text(stringResource(R.string.copy)) },
                 onClick = {
                     onCopyMessage(message.content)
                     showContextMenu = false
@@ -297,7 +301,7 @@ fun MessageBubble(
             // Issue #69: Eliminar mensaje propio
             if (isUserMessage) {
                 DropdownMenuItem(
-                    text = { Text("Eliminar") },
+                    text = { Text(stringResource(R.string.delete)) },
                     onClick = {
                         onDeleteMessage(message.id)
                         showContextMenu = false
@@ -307,7 +311,7 @@ fun MessageBubble(
             // Issue #70: Eliminar mensaje del asistente
             if (!isUserMessage) {
                 DropdownMenuItem(
-                    text = { Text("Eliminar") },
+                    text = { Text(stringResource(R.string.delete)) },
                     onClick = {
                         onDeleteMessage(message.id)
                         showContextMenu = false
@@ -336,7 +340,7 @@ fun TypingIndicator(modifier: Modifier = Modifier) {
             )
         ) {
             Text(
-                text = "escribiendo...",
+                text = stringResource(R.string.typing),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(12.dp)
@@ -430,7 +434,7 @@ fun MessageInput(
             OutlinedTextField(
                 value = messageText,
                 onValueChange = onMessageTextChanged,
-                placeholder = { Text("Escribe tu mensaje...") },
+                placeholder = { Text(stringResource(R.string.type_message_placeholder)) },
                 modifier = Modifier.weight(1f),
                 enabled = isEnabled,
                 maxLines = 4,
@@ -446,7 +450,7 @@ fun MessageInput(
             ) {
                 Icon(
                     if (isStreaming) Icons.Default.Close else Icons.Default.Send,
-                    contentDescription = if (isStreaming) "Detener streaming" else "Enviar mensaje"
+                    contentDescription = if (isStreaming) stringResource(R.string.stop_streaming) else stringResource(R.string.send_message)
                 )
             }
         }

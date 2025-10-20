@@ -10,10 +10,13 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.example.chatai.R
 import com.example.chatai.domain.model.ThemeMode
 import com.example.chatai.ui.theme.ChatAiTheme
 
@@ -25,14 +28,15 @@ fun ThemeSettingsScreen(
     viewModel: ThemeSettingsViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val context = LocalContext.current
     
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Apariencia") },
+                title = { Text(stringResource(R.string.appearance)) },
                 navigationIcon = {
                     IconButton(onClick = onBackClicked) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Volver")
+                        Icon(Icons.Default.ArrowBack, contentDescription = stringResource(R.string.back))
                     }
                 }
             )
@@ -46,7 +50,7 @@ fun ThemeSettingsScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Text(
-                text = "Selecciona el tema de la aplicación",
+                text = stringResource(R.string.select_app_theme),
                 style = MaterialTheme.typography.titleMedium
             )
             
@@ -76,12 +80,12 @@ fun ThemeSettingsScreen(
                         modifier = Modifier.padding(16.dp)
                     ) {
                         Text(
-                            text = "Vista previa",
+                            text = stringResource(R.string.theme_preview),
                             style = MaterialTheme.typography.titleSmall
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = "Este es un ejemplo de cómo se verá la aplicación con el tema seleccionado.",
+                            text = stringResource(R.string.theme_preview_description),
                             style = MaterialTheme.typography.bodyMedium
                         )
                         Spacer(modifier = Modifier.height(8.dp))
@@ -89,7 +93,7 @@ fun ThemeSettingsScreen(
                             onClick = { /* Preview action */ },
                             modifier = Modifier.fillMaxWidth()
                         ) {
-                            Text("Ejemplo de botón")
+                            Text(stringResource(R.string.example_button))
                         }
                     }
                 }
@@ -107,7 +111,7 @@ fun ThemeSettingsScreen(
                     modifier = Modifier.weight(1f),
                     enabled = uiState.showPreview
                 ) {
-                    Text("Cancelar")
+                    Text(stringResource(R.string.cancel))
                 }
                 
                 Button(
@@ -115,7 +119,7 @@ fun ThemeSettingsScreen(
                     modifier = Modifier.weight(1f),
                     enabled = uiState.hasChanges
                 ) {
-                    Text("Aplicar")
+                    Text(stringResource(R.string.apply))
                 }
             }
         }
@@ -159,11 +163,12 @@ private fun ThemeOption(
     }
 }
 
+@Composable
 private fun getThemeDescription(themeMode: ThemeMode): String {
     return when (themeMode) {
-        ThemeMode.LIGHT -> "Usa colores claros independientemente de la configuración del sistema"
-        ThemeMode.DARK -> "Usa colores oscuros independientemente de la configuración del sistema"
-        ThemeMode.SYSTEM -> "Sigue automáticamente la configuración del sistema operativo"
+        ThemeMode.LIGHT -> stringResource(R.string.theme_light_description)
+        ThemeMode.DARK -> stringResource(R.string.theme_dark_description)
+        ThemeMode.SYSTEM -> stringResource(R.string.theme_system_description)
     }
 }
 

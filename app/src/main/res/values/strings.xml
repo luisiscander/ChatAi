@@ -1,3 +1,92 @@
 <resources>
     <string name="app_name">ChatAi</string>
+    
+    <!-- Navigation and Common Actions -->
+    <string name="back">Volver</string>
+    <string name="cancel">Cancelar</string>
+    <string name="save">Guardar</string>
+    <string name="apply">Aplicar</string>
+    <string name="search">Buscar</string>
+    <string name="clear">Limpiar</string>
+    <string name="close">Cerrar</string>
+    <string name="close_search">Cerrar búsqueda</string>
+    <string name="settings">Configuración</string>
+    <string name="new_conversation">Nueva conversación</string>
+    <string name="create_conversation">Crear conversación</string>
+    <string name="export_conversation">Exportar conversación</string>
+    <string name="export_and_share">Exportar y compartir</string>
+    <string name="share">Compartir</string>
+    <string name="archive">Archivar</string>
+    <string name="view_archived">Ver archivadas</string>
+    
+    <!-- Theme Settings -->
+    <string name="appearance">Apariencia</string>
+    <string name="select_app_theme">Selecciona el tema de la aplicación</string>
+    <string name="theme_preview">Vista previa</string>
+    <string name="theme_preview_description">Este es un ejemplo de cómo se verá la aplicación con el tema seleccionado.</string>
+    <string name="example_button">Ejemplo de botón</string>
+    <string name="theme_light_description">Usa colores claros independientemente de la configuración del sistema</string>
+    <string name="theme_dark_description">Usa colores oscuros independientemente de la configuración del sistema</string>
+    <string name="theme_system_description">Sigue automáticamente la configuración del sistema operativo</string>
+    
+    <!-- Default Model Settings -->
+    <string name="default_model">Modelo por defecto</string>
+    <string name="select_default_model">Selecciona el modelo que se usará por defecto en nuevas conversaciones</string>
+    <string name="model_id">ID: %1$s</string>
+    <string name="model_available">Modelo disponible</string>
+    <string name="error_loading_models">Error al cargar modelos: %1$s</string>
+    <string name="error_saving_default_model">Error al guardar modelo por defecto: %1$s</string>
+    
+    <!-- Export Conversation -->
+    <string name="conversation">Conversación</string>
+    <string name="select_export_format">Selecciona el formato de exportación</string>
+    <string name="format_description">Descripción del formato</string>
+    <string name="file_extension">Archivo .%1$s</string>
+    <string name="export_error">Error al exportar: %1$s</string>
+    <string name="conversation_title">Conversación %1$s</string>
+    <string name="conversation_file_name">conversacion.%1$s</string>
+    
+    <!-- Export Format Descriptions -->
+    <string name="format_text_description">Formato de texto plano simple. Incluye todos los mensajes con timestamps y información básica de la conversación.</string>
+    <string name="format_markdown_description">Formato Markdown con encabezados, formato de texto y bloques de código. Ideal para documentación o compartir en plataformas que soporten Markdown.</string>
+    <string name="format_json_description">Formato JSON estructurado con toda la información de la conversación. Útil para análisis de datos o integración con otras aplicaciones.</string>
+    
+    <!-- MIME Types -->
+    <string name="mime_type_text">text/plain</string>
+    <string name="mime_type_markdown">text/markdown</string>
+    <string name="mime_type_json">application/json</string>
+    
+    <!-- Conversation List -->
+    <string name="conversations">Conversaciones</string>
+    <string name="search_conversations_placeholder">Buscar conversaciones...</string>
+    <string name="no_results">Sin resultados</string>
+    <string name="no_conversations_found">No se encontraron conversaciones</string>
+    <string name="try_other_search_terms">Intenta con otros términos de búsqueda</string>
+    <string name="you_searched">Buscaste: "%1$s"</string>
+    <string name="no_conversations">Sin conversaciones</string>
+    <string name="no_conversations_message">No tienes conversaciones</string>
+    <string name="start_new_conversation">Comienza una nueva conversación con IA</string>
+    
+    <!-- Chat Screen -->
+    <string name="new_message_indicator">Nuevo mensaje ↓</string>
+    <string name="type_message_placeholder">Escribe un mensaje...</string>
+    <string name="send_message">Enviar mensaje</string>
+    <string name="delete_message">Eliminar mensaje</string>
+    <string name="confirm_delete_message">¿Estás seguro de que quieres eliminar este mensaje?</string>
+    <string name="delete">Eliminar</string>
+    <string name="copy">Copiar</string>
+    <string name="typing">escribiendo...</string>
+    <string name="stop_streaming">Detener streaming</string>
+    
+    <!-- Menu Items -->
+    <string name="appearance_menu">Apariencia</string>
+    <string name="default_model_menu">Modelo por defecto</string>
+    
+    <!-- File Extensions -->
+    <string name="extension_txt">txt</string>
+    <string name="extension_md">md</string>
+    <string name="extension_json">json</string>
+    
+    <!-- Test Data -->
+    <string name="test_conversation_id">test</string>
 </resources>

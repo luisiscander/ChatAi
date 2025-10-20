@@ -307,24 +307,11 @@ class ChatViewModel @Inject constructor(
                     error = null
                 )
 
-                // Retry mechanism to wait for conversation to be created
-                var conversation: com.example.chatai.domain.model.Conversation? = null
-                var retries = 0
-                val maxRetries = 10
-                
-                while (conversation == null && retries < maxRetries) {
-                    conversation = try {
-                        getConversationByIdUseCase(conversationId)
-                    } catch (e: Exception) {
-                        null
-                    }
-                    
-                    if (conversation == null && retries < maxRetries - 1) {
-                        kotlinx.coroutines.delay(100) // Wait 100ms before retry
-                        retries++
-                    } else {
-                        break
-                    }
+                // Load conversation - now uses flowOf() which emits immediately
+                val conversation = try {
+                    getConversationByIdUseCase(conversationId)
+                } catch (e: Exception) {
+                    null
                 }
                 
                 val conversationTitle = conversation?.title ?: "Nueva conversación"

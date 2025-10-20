@@ -35,11 +35,9 @@ class ConversationRepositoryImpl @Inject constructor(
     }
 
     override fun getConversationById(id: String): Flow<Conversation?> {
-        return conversations.let { flow ->
-            flow.map { conversations ->
-                conversations.find { it.id == id }
-            }
-        }
+        // Return a flow that emits the current value immediately
+        val currentConversation = _conversations.value.find { it.id == id }
+        return flowOf(currentConversation)
     }
 
     override suspend fun createConversation(title: String, model: String): Conversation {

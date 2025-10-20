@@ -26,6 +26,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.chatai.R
 import com.example.chatai.domain.model.ModelType
 import com.example.chatai.ui.theme.ChatAiTheme
+import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -33,7 +34,7 @@ import java.util.*
 @Composable
 fun ConversationListScreen(
     onConversationClick: (String) -> Unit,
-    onCreateConversation: () -> Unit,
+    onCreateConversation: (String) -> Unit,
     onShowArchived: () -> Unit,
     onNavigateToThemeSettings: () -> Unit = {},
     onNavigateToDefaultModelSettings: () -> Unit = {},
@@ -44,6 +45,7 @@ fun ConversationListScreen(
     val context = LocalContext.current
     var showSearch by remember { mutableStateOf(false) }
     var searchText by remember { mutableStateOf("") }
+    val coroutineScope = rememberCoroutineScope()
     
     Scaffold(
         topBar = {
@@ -119,7 +121,14 @@ fun ConversationListScreen(
         },
         floatingActionButton = {
             FloatingActionButton(
-                onClick = onCreateConversation,
+                onClick = {
+                    coroutineScope.launch {
+                        val conversationId = viewModel.createConversation()
+                        if (conversationId != null) {
+                            onCreateConversation(conversationId)
+                        }
+                    }
+                },
                 containerColor = MaterialTheme.colorScheme.primary
             ) {
                 Icon(Icons.Default.Add, contentDescription = stringResource(R.string.new_conversation))
@@ -176,7 +185,14 @@ fun ConversationListScreen(
             }
             uiState.conversations.isEmpty() -> {
                 EmptyConversationsState(
-                    onCreateConversation = onCreateConversation,
+                    onCreateConversation = {
+                        coroutineScope.launch {
+                            val conversationId = viewModel.createConversation()
+                            if (conversationId != null) {
+                                onCreateConversation(conversationId)
+                            }
+                        }
+                    },
                     modifier = Modifier.padding(paddingValues)
                 )
             }

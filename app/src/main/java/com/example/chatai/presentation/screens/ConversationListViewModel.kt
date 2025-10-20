@@ -19,7 +19,8 @@ import javax.inject.Inject
 class ConversationListViewModel @Inject constructor(
     private val getConversationsUseCase: GetConversationsUseCase,
     private val archiveConversationUseCase: ArchiveConversationUseCase,
-    private val searchConversationsUseCase: SearchConversationsUseCase
+    private val searchConversationsUseCase: SearchConversationsUseCase,
+    private val createConversationUseCase: com.example.chatai.domain.usecase.CreateConversationUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ConversationListUiState())
@@ -92,6 +93,24 @@ class ConversationListViewModel @Inject constructor(
             searchResult = null
         )
         loadConversations()
+    }
+    
+    suspend fun createConversation(): String? {
+        return try {
+            val result = createConversationUseCase()
+            when (result) {
+                is com.example.chatai.domain.usecase.CreateConversationResult.Success -> {
+                    result.conversation.id
+                }
+                is com.example.chatai.domain.usecase.CreateConversationResult.Error -> {
+                    _uiState.value = _uiState.value.copy(error = result.message)
+                    null
+                }
+            }
+        } catch (e: Exception) {
+            _uiState.value = _uiState.value.copy(error = e.message)
+            null
+        }
     }
 }
 

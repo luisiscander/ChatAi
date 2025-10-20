@@ -86,10 +86,9 @@ fun NavigationManager(
                 onConversationClick = { conversationId ->
                     navController.navigate(Routes.CHAT.replace("{conversationId}", conversationId))
                 },
-                onCreateConversation = {
-                    // Create a new conversation and navigate to chat
-                    val newConversationId = "new_conversation_${System.currentTimeMillis()}"
-                    navController.navigate(Routes.CHAT.replace("{conversationId}", newConversationId))
+                onCreateConversation = { conversationId ->
+                    // Navigate to chat with the newly created conversation ID
+                    navController.navigate(Routes.CHAT.replace("{conversationId}", conversationId))
                 },
                 onShowArchived = {
                     navController.navigate(Routes.ARCHIVED_CONVERSATIONS)

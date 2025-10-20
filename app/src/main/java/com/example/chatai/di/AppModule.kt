@@ -194,4 +194,22 @@ object AppModuleProvider {
         ): CreateConversationUseCase {
             return CreateConversationUseCase(conversationRepository, userPreferencesRepository, context)
         }
+        
+        @Provides
+        @Singleton
+        fun provideExportAllConversationsUseCase(
+            conversationRepository: ConversationRepository,
+            exportConversationUseCase: ExportConversationUseCase
+        ): ExportAllConversationsUseCase {
+            return ExportAllConversationsUseCase(conversationRepository, exportConversationUseCase)
+        }
+        
+        @Provides
+        @Singleton
+        fun provideDeleteAllDataUseCase(
+            conversationRepository: ConversationRepository,
+            userPreferencesRepository: UserPreferencesRepository
+        ): DeleteAllDataUseCase {
+            return DeleteAllDataUseCase(conversationRepository, userPreferencesRepository)
+        }
 }

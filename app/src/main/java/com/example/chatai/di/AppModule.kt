@@ -87,8 +87,10 @@ object AppModuleProvider {
     
     @Provides
     @Singleton
-    fun provideValidateApiKeyConnectionUseCase(): ValidateApiKeyConnectionUseCase {
-        return ValidateApiKeyConnectionUseCase()
+    fun provideValidateApiKeyConnectionUseCase(
+        openRouterApiService: com.example.chatai.data.remote.api.OpenRouterApiService
+    ): ValidateApiKeyConnectionUseCase {
+        return ValidateApiKeyConnectionUseCase(openRouterApiService)
     }
     
     @Provides

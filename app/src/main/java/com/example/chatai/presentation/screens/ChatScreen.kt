@@ -8,6 +8,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Send
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -32,6 +33,8 @@ fun ChatScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val listState = rememberLazyListState()
+    var showDeleteDialog by remember { mutableStateOf(false) }
+    var messageToDelete by remember { mutableStateOf<Message?>(null) }
     
     // Auto-scroll to bottom when new messages arrive
     LaunchedEffect(uiState.messages.size) {
@@ -66,6 +69,11 @@ fun ChatScreen(
             items(uiState.messages) { message ->
                 MessageBubble(
                     message = message,
+                    onCopyMessage = viewModel::copyMessage,
+                    onDeleteMessage = { 
+                        messageToDelete = message
+                        showDeleteDialog = true
+                    },
                     modifier = Modifier.fillMaxWidth()
                 )
             }
@@ -90,12 +98,49 @@ fun ChatScreen(
             error = uiState.error,
             modifier = Modifier.fillMaxWidth()
         )
+        
+        // Delete confirmation dialog
+        if (showDeleteDialog && messageToDelete != null) {
+            AlertDialog(
+                onDismissRequest = { 
+                    showDeleteDialog = false
+                    messageToDelete = null
+                },
+                title = { Text("Eliminar mensaje") },
+                text = { Text("¿Estás seguro de que quieres eliminar este mensaje?") },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            messageToDelete?.let { message ->
+                                viewModel.deleteMessage(message.id)
+                            }
+                            showDeleteDialog = false
+                            messageToDelete = null
+                        }
+                    ) {
+                        Text("Eliminar")
+                    }
+                },
+                dismissButton = {
+                    TextButton(
+                        onClick = {
+                            showDeleteDialog = false
+                            messageToDelete = null
+                        }
+                    ) {
+                        Text("Cancelar")
+                    }
+                }
+            )
+        }
     }
 }
 
 @Composable
 fun MessageBubble(
     message: Message,
+    onCopyMessage: (String) -> Unit = {},
+    onDeleteMessage: (String) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val isUserMessage = message.isFromUser
@@ -256,20 +301,20 @@ fun MessageInput(
             
             Spacer(modifier = Modifier.width(8.dp))
             
-            FloatingActionButton(
-                onClick = if (isEnabled && messageText.isNotBlank() && 
-                             validationResult is com.example.chatai.domain.usecase.MessageValidationResult.Valid) {
-                    onSendMessage
-                } else {
-                    {}
-                },
-                modifier = Modifier.size(48.dp)
-            ) {
-                Icon(
-                    Icons.Default.Send,
-                    contentDescription = "Enviar mensaje"
-                )
-            }
+                   FloatingActionButton(
+                       onClick = if (isEnabled && messageText.isNotBlank() &&
+                                    validationResult is com.example.chatai.domain.usecase.MessageValidationResult.Valid) {
+                           onSendMessage
+                       } else {
+                           {}
+                       },
+                       modifier = Modifier.size(48.dp)
+                   ) {
+                       Icon(
+                           Icons.Default.Send,
+                           contentDescription = "Enviar mensaje"
+                       )
+                   }
         }
     }
 }

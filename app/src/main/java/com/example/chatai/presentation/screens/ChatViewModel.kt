@@ -15,7 +15,9 @@ import javax.inject.Inject
 
 @HiltViewModel
 class ChatViewModel @Inject constructor(
-    private val validateMessageUseCase: ValidateMessageUseCase
+    private val validateMessageUseCase: ValidateMessageUseCase,
+    private val copyMessageUseCase: CopyMessageUseCase,
+    private val deleteMessageUseCase: DeleteMessageUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ChatUiState())
@@ -86,6 +88,44 @@ class ChatViewModel @Inject constructor(
             )
         }
     }
+
+    fun copyMessage(messageText: String) {
+        val result = copyMessageUseCase(messageText)
+        when (result) {
+            is CopyMessageResult.Success -> {
+                _uiState.value = _uiState.value.copy(
+                    error = null
+                )
+            }
+            is CopyMessageResult.Error -> {
+                _uiState.value = _uiState.value.copy(
+                    error = result.message
+                )
+            }
+        }
+    }
+
+    fun deleteMessage(messageId: String) {
+        viewModelScope.launch {
+            val result = deleteMessageUseCase(messageId)
+            when (result) {
+                is DeleteMessageResult.Success -> {
+                    // Actualizar lista de mensajes
+                    val updatedMessages = _uiState.value.messages.filter { it.id != messageId }
+                    _uiState.value = _uiState.value.copy(
+                        messages = updatedMessages,
+                        error = null
+                    )
+                }
+                is DeleteMessageResult.Error -> {
+                    _uiState.value = _uiState.value.copy(
+                        error = result.message
+                    )
+                }
+            }
+        }
+    }
+
 }
 
 data class ChatUiState(

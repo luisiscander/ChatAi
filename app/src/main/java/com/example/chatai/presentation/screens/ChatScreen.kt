@@ -47,7 +47,11 @@ fun ChatScreen(
     // Load conversation history when screen opens
     LaunchedEffect(conversationId) {
         if (conversationId.isNotEmpty()) {
-            viewModel.loadConversationHistory(conversationId)
+            try {
+                viewModel.loadConversationHistory(conversationId)
+            } catch (e: Exception) {
+                // Handle any errors gracefully
+            }
         }
     }
     

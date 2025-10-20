@@ -44,7 +44,8 @@ fun NavigationManager(
     modifier: Modifier = Modifier
 ) {
     val navController = rememberNavController()
-    val conversationNavViewModel: ConversationNavigationViewModel = hiltViewModel()
+    // Remove the ViewModel for now to simplify
+    // val conversationNavViewModel: ConversationNavigationViewModel = hiltViewModel()
     
     // Determine initial route based on onboarding status
     val startRoute = when {
@@ -90,10 +91,9 @@ fun NavigationManager(
                     navController.navigate(Routes.CHAT.replace("{conversationId}", conversationId))
                 },
                 onCreateConversation = {
-                    // Create a new conversation and navigate to chat
-                    conversationNavViewModel.createNewConversation { conversationId ->
-                        navController.navigate(Routes.CHAT.replace("{conversationId}", conversationId))
-                    }
+                    // Create a simple conversation ID and navigate directly
+                    val conversationId = "conversation_${System.currentTimeMillis()}"
+                    navController.navigate(Routes.CHAT.replace("{conversationId}", conversationId))
                 },
                 onShowArchived = {
                     navController.navigate(Routes.ARCHIVED_CONVERSATIONS)
@@ -128,10 +128,9 @@ fun NavigationManager(
                     navController.navigate(Routes.CHAT.replace("{conversationId}", conversationId))
                 },
                 onCreateConversation = {
-                    // Create a new conversation and navigate to chat
-                    conversationNavViewModel.createNewConversation { conversationId ->
-                        navController.navigate(Routes.CHAT.replace("{conversationId}", conversationId))
-                    }
+                    // Create a simple conversation ID and navigate directly
+                    val conversationId = "conversation_${System.currentTimeMillis()}"
+                    navController.navigate(Routes.CHAT.replace("{conversationId}", conversationId))
                 },
                 onShowArchived = {
                     navController.popBackStack()

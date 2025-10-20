@@ -304,12 +304,21 @@ class ChatViewModel @Inject constructor(
                     conversationId = conversationId
                 )
 
-                // Load conversation title
-                val conversation = getConversationByIdUseCase(conversationId)
-                val conversationTitle = conversation?.title ?: "Chat"
+                // Load conversation title - handle case where conversation doesn't exist
+                val conversation = try {
+                    getConversationByIdUseCase(conversationId)
+                } catch (e: Exception) {
+                    null
+                }
+                
+                val conversationTitle = conversation?.title ?: "Nueva conversación"
 
                 // Load messages - use sync method to avoid infinite waiting
-                val messages = getMessagesSyncUseCase(conversationId)
+                val messages = try {
+                    getMessagesSyncUseCase(conversationId)
+                } catch (e: Exception) {
+                    emptyList()
+                }
                 
                 _uiState.value = _uiState.value.copy(
                     messages = messages,

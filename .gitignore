@@ -14,6 +14,22 @@
 .cxx
 local.properties
 
+# Security: API Keys and sensitive configuration files
+*.key
+*.pem
+*.p12
+*.jks
+keystore.properties
+secrets.properties
+api-keys.properties
+
+# Environment variables and configuration
+.env
+.env.local
+.env.development
+.env.production
+config.json
+
 # Project documentation files
 STACK.md
 REQUIREMENTS.md

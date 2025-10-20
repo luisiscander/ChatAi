@@ -2,6 +2,7 @@ package com.example.chatai.data.local
 
 import android.content.Context
 import android.content.SharedPreferences
+import com.example.chatai.config.ApiConfig
 import com.example.chatai.domain.repository.UserPreferencesRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
@@ -33,16 +34,25 @@ class UserPreferencesRepositoryImpl @Inject constructor(
     }
 
     override suspend fun hasApiKey(): Boolean = withContext(Dispatchers.IO) {
-        val apiKey = sharedPreferences.getString(KEY_API_KEY, null)
-        !apiKey.isNullOrBlank()
+        // Check if API key is available in configuration or user input
+        val userApiKey = sharedPreferences.getString(KEY_API_KEY, null)
+        !userApiKey.isNullOrBlank() || !ApiConfig.DEFAULT_API_KEY.isNullOrBlank()
     }
 
     override suspend fun setApiKey(apiKey: String) = withContext(Dispatchers.IO) {
+        // Store user-provided API key in SharedPreferences
         sharedPreferences.edit().putString(KEY_API_KEY, apiKey).apply()
     }
 
     override suspend fun getApiKey(): String? = withContext(Dispatchers.IO) {
-        sharedPreferences.getString(KEY_API_KEY, null)
+        // Priority: 1. User-provided API key, 2. Default API key from config
+        val userApiKey = sharedPreferences.getString(KEY_API_KEY, null)
+        
+        when {
+            !userApiKey.isNullOrBlank() -> userApiKey
+            !ApiConfig.DEFAULT_API_KEY.isNullOrBlank() -> ApiConfig.DEFAULT_API_KEY
+            else -> null
+        }
     }
 
     override suspend fun clearApiKey() = withContext(Dispatchers.IO) {

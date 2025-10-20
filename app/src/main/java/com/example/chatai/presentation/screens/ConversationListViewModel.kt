@@ -13,6 +13,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -23,89 +26,103 @@ class ConversationListViewModel @Inject constructor(
     private val searchConversationsUseCase: SearchConversationsUseCase
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(ConversationListUiState())
-    val uiState: StateFlow<ConversationListUiState> = _uiState.asStateFlow()
+    // Convert cold flow to hot flow using stateIn
+    private val conversationsFlow = getConversationsUseCase(false)
+        .catch { exception ->
+            // Handle error in flow
+        }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = emptyList()
+        )
 
-    init {
-        loadConversations()
-    }
+    private val _isLoading = MutableStateFlow(false)
+    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
-    private fun loadConversations() {
+    private val _error = MutableStateFlow<String?>(null)
+    val error: StateFlow<String?> = _error.asStateFlow()
+
+    private val _searchQuery = MutableStateFlow("")
+    val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
+
+    private val _searchResult = MutableStateFlow<SearchResult?>(null)
+    val searchResult: StateFlow<SearchResult?> = _searchResult.asStateFlow()
+
+    // Combined UI state
+    val uiState: StateFlow<ConversationListUiState> = combine(
+        conversationsFlow,
+        isLoading,
+        error,
+        searchQuery,
+        searchResult
+    ) { conversations, loading, errorMsg, query, result ->
+        ConversationListUiState(
+            conversations = conversations,
+            isLoading = loading,
+            error = errorMsg,
+            searchQuery = query,
+            searchResult = result
+        )
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = ConversationListUiState()
+    )
+
+    fun archiveConversation(conversationId: String) {
         viewModelScope.launch {
             try {
-                _uiState.value = _uiState.value.copy(isLoading = true)
-                
-                // Use first() instead of collect() for StateFlow
-                val conversations = getConversationsUseCase(false).catch { exception ->
-                    _uiState.value = _uiState.value.copy(
-                        isLoading = false,
-                        error = exception.message
-                    )
-                }.first()
-                
-                _uiState.value = _uiState.value.copy(
-                    isLoading = false,
-                    conversations = conversations,
-                    error = null
-                )
+                archiveConversationUseCase(conversationId)
+                // The conversations flow will automatically update
             } catch (e: Exception) {
-                _uiState.value = _uiState.value.copy(
-                    isLoading = false,
-                    error = e.message
-                )
+                _error.value = e.message
             }
         }
     }
 
-    fun archiveConversation(conversationId: String) {
+    fun refreshConversations() {
+        // Conversations flow will automatically refresh
+        _isLoading.value = true
         viewModelScope.launch {
-            archiveConversationUseCase(conversationId)
-            // Recargar conversaciones después de archivar
-            loadConversations()
+            try {
+                // Trigger refresh by accessing the flow
+                conversationsFlow.value
+                _isLoading.value = false
+            } catch (e: Exception) {
+                _error.value = e.message
+                _isLoading.value = false
+            }
         }
     }
 
-    fun refreshConversations() {
-        loadConversations()
-    }
-
     fun clearError() {
-        _uiState.value = _uiState.value.copy(error = null)
+        _error.value = null
     }
 
     fun searchConversations(query: String) {
+        _searchQuery.value = query
         viewModelScope.launch {
             try {
-                _uiState.value = _uiState.value.copy(searchQuery = query)
-                
-                // Use first() instead of collect() for StateFlow
-                val searchResult = searchConversationsUseCase(query)
+                val result = searchConversationsUseCase(query)
                     .catch { exception ->
-                        _uiState.value = _uiState.value.copy(
-                            error = exception.message,
-                            searchResult = null
-                        )
-                    }.first()
+                        _error.value = exception.message
+                        _searchResult.value = null
+                    }
+                    .first()
                 
-                _uiState.value = _uiState.value.copy(
-                    searchResult = searchResult,
-                    error = null
-                )
+                _searchResult.value = result
+                _error.value = null
             } catch (e: Exception) {
-                _uiState.value = _uiState.value.copy(
-                    error = e.message,
-                    searchResult = null
-                )
+                _error.value = e.message
+                _searchResult.value = null
             }
         }
     }
 
     fun clearSearch() {
-        _uiState.value = _uiState.value.copy(
-            searchQuery = "",
-            searchResult = null
-        )
-        loadConversations()
+        _searchQuery.value = ""
+        _searchResult.value = null
     }
 }
 

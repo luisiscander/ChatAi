@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -31,22 +32,28 @@ class ConversationListViewModel @Inject constructor(
 
     private fun loadConversations() {
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true)
-            
-            getConversationsUseCase(false)
-                .catch { exception ->
+            try {
+                _uiState.value = _uiState.value.copy(isLoading = true)
+                
+                // Use first() instead of collect() for StateFlow
+                val conversations = getConversationsUseCase(false).catch { exception ->
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
                         error = exception.message
                     )
-                }
-                .collect { conversations ->
-                    _uiState.value = _uiState.value.copy(
-                        isLoading = false,
-                        conversations = conversations,
-                        error = null
-                    )
-                }
+                }.first()
+                
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    conversations = conversations,
+                    error = null
+                )
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    error = e.message
+                )
+            }
         }
     }
 
@@ -68,21 +75,28 @@ class ConversationListViewModel @Inject constructor(
 
     fun searchConversations(query: String) {
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(searchQuery = query)
-            
-            searchConversationsUseCase(query)
-                .catch { exception ->
-                    _uiState.value = _uiState.value.copy(
-                        error = exception.message,
-                        searchResult = null
-                    )
-                }
-                .collect { searchResult ->
-                    _uiState.value = _uiState.value.copy(
-                        searchResult = searchResult,
-                        error = null
-                    )
-                }
+            try {
+                _uiState.value = _uiState.value.copy(searchQuery = query)
+                
+                // Use first() instead of collect() for StateFlow
+                val searchResult = searchConversationsUseCase(query)
+                    .catch { exception ->
+                        _uiState.value = _uiState.value.copy(
+                            error = exception.message,
+                            searchResult = null
+                        )
+                    }.first()
+                
+                _uiState.value = _uiState.value.copy(
+                    searchResult = searchResult,
+                    error = null
+                )
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(
+                    error = e.message,
+                    searchResult = null
+                )
+            }
         }
     }
 

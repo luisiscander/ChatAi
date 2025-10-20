@@ -28,7 +28,8 @@ class ChatViewModel @Inject constructor(
     private val getMessagesWithPaginationUseCase: GetMessagesWithPaginationUseCase,
     private val checkNetworkConnectionUseCase: CheckNetworkConnectionUseCase,
     private val validateApiKeyConnectionUseCase: ValidateApiKeyConnectionUseCase,
-    private val userPreferencesRepository: UserPreferencesRepository
+    private val userPreferencesRepository: UserPreferencesRepository,
+    private val conversationRepository: ConversationRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ChatUiState())
@@ -301,10 +302,16 @@ class ChatViewModel @Inject constructor(
                 conversationId = conversationId
             )
 
+            // Load conversation title
+            val conversation = conversationRepository.getConversationById(conversationId).first()
+            val conversationTitle = conversation?.title ?: "Chat"
+
+            // Load messages
             getMessagesUseCase(conversationId).collect { messages ->
                 _uiState.value = _uiState.value.copy(
                     messages = messages,
-                    isLoadingHistory = false
+                    isLoadingHistory = false,
+                    conversationTitle = conversationTitle
                 )
             }
         }

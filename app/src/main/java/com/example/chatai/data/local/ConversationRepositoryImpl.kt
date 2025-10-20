@@ -4,7 +4,11 @@ import com.example.chatai.domain.model.Conversation
 import com.example.chatai.domain.model.Message
 import com.example.chatai.domain.repository.ConversationRepository
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import java.util.*
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -14,21 +18,32 @@ class ConversationRepositoryImpl @Inject constructor(
     // TODO: Add Room dependencies when compilation issues are resolved
 ) : ConversationRepository {
 
-    // Temporary implementation - returns empty data
+    // Temporary in-memory storage for conversations
+    private val _conversations = MutableStateFlow<List<Conversation>>(emptyList())
+    private val conversations: StateFlow<List<Conversation>> = _conversations.asStateFlow()
+
+    // Temporary in-memory storage for messages
+    private val _messages = MutableStateFlow<Map<String, List<Message>>>(emptyMap())
+    private val messages: StateFlow<Map<String, List<Message>>> = _messages.asStateFlow()
+
     override fun getAllConversations(): Flow<List<Conversation>> {
-        return flowOf(emptyList())
+        return conversations
     }
 
     override fun getConversationsByArchivedStatus(isArchived: Boolean): Flow<List<Conversation>> {
-        return flowOf(emptyList())
+        return conversations
     }
 
     override fun getConversationById(id: String): Flow<Conversation?> {
-        return flowOf(null)
+        return conversations.let { flow ->
+            flow.map { conversations ->
+                conversations.find { it.id == id }
+            }
+        }
     }
 
     override suspend fun createConversation(title: String, model: String): Conversation {
-        return Conversation(
+        val newConversation = Conversation(
             id = UUID.randomUUID().toString(),
             title = title,
             model = model,
@@ -38,10 +53,22 @@ class ConversationRepositoryImpl @Inject constructor(
             createdAt = Date(),
             updatedAt = Date()
         )
+        
+        // Add to in-memory storage
+        val currentConversations = _conversations.value.toMutableList()
+        currentConversations.add(newConversation)
+        _conversations.value = currentConversations
+        
+        return newConversation
     }
 
     override suspend fun updateConversation(conversation: Conversation) {
-        // TODO: Implement when Room is ready
+        val currentConversations = _conversations.value.toMutableList()
+        val index = currentConversations.indexOfFirst { it.id == conversation.id }
+        if (index != -1) {
+            currentConversations[index] = conversation
+            _conversations.value = currentConversations
+        }
     }
 
     override suspend fun deleteConversation(id: String) {
@@ -57,11 +84,19 @@ class ConversationRepositoryImpl @Inject constructor(
     }
 
     override fun getMessagesByConversationId(conversationId: String): Flow<List<Message>> {
-        return flowOf(emptyList())
+        return messages.let { flow ->
+            flow.map { messageMap ->
+                messageMap[conversationId] ?: emptyList()
+            }
+        }
     }
 
     override suspend fun addMessage(message: Message) {
-        // TODO: Implement when Room is ready
+        val currentMessages = _messages.value.toMutableMap()
+        val conversationMessages = currentMessages[message.conversationId]?.toMutableList() ?: mutableListOf()
+        conversationMessages.add(message)
+        currentMessages[message.conversationId] = conversationMessages
+        _messages.value = currentMessages
     }
 
     override suspend fun deleteMessage(id: String) {

@@ -34,7 +34,7 @@ import java.util.*
 @Composable
 fun ConversationListScreen(
     onConversationClick: (String) -> Unit,
-    onCreateConversation: () -> Unit,
+    onCreateConversation: (String) -> Unit,
     onShowArchived: () -> Unit,
     onNavigateToThemeSettings: () -> Unit = {},
     onNavigateToDefaultModelSettings: () -> Unit = {},
@@ -47,6 +47,16 @@ fun ConversationListScreen(
     var searchText by remember { mutableStateOf("") }
     val coroutineScope = rememberCoroutineScope()
     
+    // Function to handle conversation creation
+    val handleCreateConversation: () -> Unit = {
+        coroutineScope.launch {
+            val conversationId = viewModel.createConversation()
+            conversationId?.let { id ->
+                onCreateConversation(id)
+            }
+        }
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -121,7 +131,7 @@ fun ConversationListScreen(
         },
         floatingActionButton = {
             FloatingActionButton(
-                onClick = onCreateConversation,
+                onClick = handleCreateConversation,
                 containerColor = MaterialTheme.colorScheme.primary
             ) {
                 Icon(Icons.Default.Add, contentDescription = stringResource(R.string.new_conversation))
@@ -178,7 +188,7 @@ fun ConversationListScreen(
             }
             uiState.conversations.isEmpty() -> {
                 EmptyConversationsState(
-                    onCreateConversation = onCreateConversation,
+                    onCreateConversation = handleCreateConversation,
                     modifier = Modifier.padding(paddingValues)
                 )
             }

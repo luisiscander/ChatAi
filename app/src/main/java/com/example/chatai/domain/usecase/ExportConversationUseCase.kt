@@ -3,6 +3,7 @@ package com.example.chatai.domain.usecase
 import com.example.chatai.domain.model.Conversation
 import com.example.chatai.domain.model.Message
 import com.example.chatai.domain.repository.ConversationRepository
+import kotlinx.coroutines.flow.first
 import java.text.SimpleDateFormat
 import java.util.*
 import javax.inject.Inject
@@ -15,8 +16,16 @@ class ExportConversationUseCase @Inject constructor(
         format: ExportFormat
     ): ExportResult {
         return try {
-            val conversation = conversationRepository.getConversationById(conversationId)
-            val messages = conversationRepository.getMessages(conversationId)
+            val conversationFlow = conversationRepository.getConversationById(conversationId)
+            val messagesFlow = conversationRepository.getMessagesByConversationId(conversationId)
+            
+            // Collect the flows to get the actual data
+            val conversation = conversationFlow.first()
+            val messages = messagesFlow.first()
+            
+            if (conversation == null) {
+                return ExportResult.Error("Conversación no encontrada")
+            }
             
             val exportedContent = when (format) {
                 ExportFormat.TEXT -> exportAsText(conversation, messages)
@@ -35,14 +44,14 @@ class ExportConversationUseCase @Inject constructor(
         val sb = StringBuilder()
         
         sb.appendLine("Conversación: ${conversation.title}")
-        sb.appendLine("Fecha: ${dateFormat.format(Date(conversation.createdAt))}")
-        sb.appendLine("Modelo: ${conversation.modelId}")
-        sb.appendLine("=" * 50)
+        sb.appendLine("Fecha: ${dateFormat.format(conversation.createdAt)}")
+        sb.appendLine("Modelo: ${conversation.model}")
+        sb.appendLine("=".repeat(50))
         sb.appendLine()
         
         messages.forEach { message ->
             val sender = if (message.isFromUser) "Usuario" else "Asistente"
-            val timestamp = dateFormat.format(Date(message.timestamp))
+            val timestamp = dateFormat.format(message.timestamp)
             
             sb.appendLine("[$timestamp] $sender:")
             sb.appendLine(message.content)
@@ -58,15 +67,15 @@ class ExportConversationUseCase @Inject constructor(
         
         sb.appendLine("# ${conversation.title}")
         sb.appendLine()
-        sb.appendLine("**Fecha:** ${dateFormat.format(Date(conversation.createdAt))}")
-        sb.appendLine("**Modelo:** ${conversation.modelId}")
+        sb.appendLine("**Fecha:** ${dateFormat.format(conversation.createdAt)}")
+        sb.appendLine("**Modelo:** ${conversation.model}")
         sb.appendLine()
         sb.appendLine("---")
         sb.appendLine()
         
         messages.forEach { message ->
             val sender = if (message.isFromUser) "👤 Usuario" else "🤖 Asistente"
-            val timestamp = dateFormat.format(Date(message.timestamp))
+            val timestamp = dateFormat.format(message.timestamp)
             
             sb.appendLine("## $sender")
             sb.appendLine("*$timestamp*")
@@ -90,8 +99,8 @@ class ExportConversationUseCase @Inject constructor(
             "conversation": {
                 "id": "${conversation.id}",
                 "title": "${conversation.title}",
-                "createdAt": "${dateFormat.format(Date(conversation.createdAt))}",
-                "modelId": "${conversation.modelId}",
+                "createdAt": "${dateFormat.format(conversation.createdAt)}",
+                "model": "${conversation.model}",
                 "isArchived": ${conversation.isArchived}
             },
             "messages": [
@@ -101,7 +110,7 @@ class ExportConversationUseCase @Inject constructor(
                         "id": "${message.id}",
                         "content": "${message.content.replace("\"", "\\\"")}",
                         "isFromUser": ${message.isFromUser},
-                        "timestamp": "${dateFormat.format(Date(message.timestamp))}"
+                        "timestamp": "${dateFormat.format(message.timestamp)}"
                     }
                     """.trimIndent()
                 }}

@@ -71,11 +71,13 @@ fun DefaultModelSettingsScreen(
                         containerColor = MaterialTheme.colorScheme.errorContainer
                     )
                 ) {
+                uiState.errorMessage?.let { error ->
                     Text(
-                        text = uiState.errorMessage,
+                        text = error,
                         modifier = Modifier.padding(16.dp),
                         color = MaterialTheme.colorScheme.onErrorContainer
                     )
+                }
                 }
             } else {
                 LazyColumn(
@@ -155,13 +157,13 @@ private fun ModelOption(
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-                model.contextLength?.let { contextLength ->
-                    Text(
-                        text = "Contexto: ${contextLength} tokens",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
+                // Note: contextLength property doesn't exist in the current model
+                // This is just for preview purposes
+                Text(
+                    text = "Modelo disponible",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
         }
     }

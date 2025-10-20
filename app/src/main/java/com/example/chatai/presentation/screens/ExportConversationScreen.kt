@@ -62,7 +62,7 @@ fun ExportConversationScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             // Conversation info
-            if (uiState.conversationTitle != null) {
+            uiState.conversationTitle?.let { title ->
                 Card(
                     modifier = Modifier.fillMaxWidth()
                 ) {
@@ -74,7 +74,7 @@ fun ExportConversationScreen(
                             style = MaterialTheme.typography.titleMedium
                         )
                         Text(
-                            text = uiState.conversationTitle,
+                            text = title,
                             style = MaterialTheme.typography.bodyLarge,
                             color = MaterialTheme.colorScheme.primary
                         )

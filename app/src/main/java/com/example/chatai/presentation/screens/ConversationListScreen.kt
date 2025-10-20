@@ -8,7 +8,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Star
@@ -94,7 +93,7 @@ fun ConversationListScreen(
                             ) {
                                 DropdownMenuItem(
                                     text = { Text("Apariencia") },
-                                    leadingIcon = { Icon(Icons.Default.Palette, contentDescription = null) },
+                                    leadingIcon = { Icon(Icons.Default.Star, contentDescription = null) },
                                     onClick = {
                                         onNavigateToThemeSettings()
                                         showMenu = false

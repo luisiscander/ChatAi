@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import com.example.chatai.domain.usecase.OnboardingStatus
 import com.example.chatai.presentation.screens.ApiKeySetupScreen
+import com.example.chatai.presentation.screens.ChatScreen
 import com.example.chatai.presentation.screens.ConversationListScreen
 import com.example.chatai.presentation.screens.MainScreen
 import com.example.chatai.presentation.screens.OnboardingScreen
@@ -36,7 +37,8 @@ fun NavigationManager(
         onboardingStatus == OnboardingStatus.ShowMainApp -> {
             ConversationListScreen(
                 onConversationClick = { conversationId ->
-                    // TODO: Navigate to chat screen
+                    // For now, show a simple chat screen
+                    // TODO: Implement proper navigation between screens
                 },
                 onCreateConversation = {
                     // TODO: Navigate to create conversation

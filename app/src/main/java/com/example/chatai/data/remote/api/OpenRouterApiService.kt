@@ -6,7 +6,7 @@ import retrofit2.http.GET
 import retrofit2.http.Header
 
 interface OpenRouterApiService {
-    
+
     /**
      * Validates API key by fetching available models
      * This endpoint requires authentication and will fail with invalid API key

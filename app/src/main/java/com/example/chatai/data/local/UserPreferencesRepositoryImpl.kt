@@ -3,6 +3,7 @@ package com.example.chatai.data.local
 import android.content.Context
 import android.content.SharedPreferences
 import com.example.chatai.config.ApiConfig
+import com.example.chatai.domain.model.ThemeMode
 import com.example.chatai.domain.repository.UserPreferencesRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
@@ -23,6 +24,8 @@ class UserPreferencesRepositoryImpl @Inject constructor(
         private const val PREFS_NAME = "chat_ai_preferences"
         private const val KEY_FIRST_TIME_USER = "first_time_user"
         private const val KEY_API_KEY = "api_key"
+        private const val KEY_THEME_MODE = "theme_mode"
+        private const val KEY_DEFAULT_MODEL = "default_model"
     }
 
     override suspend fun isFirstTimeUser(): Boolean = withContext(Dispatchers.IO) {
@@ -57,5 +60,26 @@ class UserPreferencesRepositoryImpl @Inject constructor(
 
     override suspend fun clearApiKey() = withContext(Dispatchers.IO) {
         sharedPreferences.edit().remove(KEY_API_KEY).apply()
+    }
+
+    override suspend fun getThemeMode(): ThemeMode = withContext(Dispatchers.IO) {
+        val themeModeString = sharedPreferences.getString(KEY_THEME_MODE, ThemeMode.SYSTEM.name)
+        try {
+            ThemeMode.valueOf(themeModeString ?: ThemeMode.SYSTEM.name)
+        } catch (e: IllegalArgumentException) {
+            ThemeMode.SYSTEM
+        }
+    }
+
+    override suspend fun setThemeMode(themeMode: ThemeMode) = withContext(Dispatchers.IO) {
+        sharedPreferences.edit().putString(KEY_THEME_MODE, themeMode.name).apply()
+    }
+
+    override suspend fun getDefaultModel(): String? = withContext(Dispatchers.IO) {
+        sharedPreferences.getString(KEY_DEFAULT_MODEL, null)
+    }
+
+    override suspend fun setDefaultModel(modelId: String) = withContext(Dispatchers.IO) {
+        sharedPreferences.edit().putString(KEY_DEFAULT_MODEL, modelId).apply()
     }
 }

@@ -120,4 +120,52 @@ object AppModuleProvider {
            ): GetMessagesWithPaginationUseCase {
                return GetMessagesWithPaginationUseCase(conversationRepository)
            }
+           
+           @Provides
+           @Singleton
+           fun provideGetThemeModeUseCase(
+               userPreferencesRepository: UserPreferencesRepository
+           ): GetThemeModeUseCase {
+               return GetThemeModeUseCase(userPreferencesRepository)
+           }
+           
+           @Provides
+           @Singleton
+           fun provideSetThemeModeUseCase(
+               userPreferencesRepository: UserPreferencesRepository
+           ): SetThemeModeUseCase {
+               return SetThemeModeUseCase(userPreferencesRepository)
+           }
+           
+           @Provides
+           @Singleton
+           fun provideGetDefaultModelUseCase(
+               userPreferencesRepository: UserPreferencesRepository
+           ): GetDefaultModelUseCase {
+               return GetDefaultModelUseCase(userPreferencesRepository)
+           }
+           
+           @Provides
+           @Singleton
+           fun provideSetDefaultModelUseCase(
+               userPreferencesRepository: UserPreferencesRepository
+           ): SetDefaultModelUseCase {
+               return SetDefaultModelUseCase(userPreferencesRepository)
+           }
+           
+           @Provides
+           @Singleton
+           fun provideExportConversationUseCase(
+               conversationRepository: ConversationRepository
+           ): ExportConversationUseCase {
+               return ExportConversationUseCase(conversationRepository)
+           }
+           
+           @Provides
+           @Singleton
+           fun provideShareFileUseCase(
+               @ApplicationContext context: Context
+           ): ShareFileUseCase {
+               return ShareFileUseCase(context)
+           }
 }

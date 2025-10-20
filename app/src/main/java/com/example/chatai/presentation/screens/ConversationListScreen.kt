@@ -7,7 +7,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -30,6 +32,8 @@ fun ConversationListScreen(
     onConversationClick: (String) -> Unit,
     onCreateConversation: () -> Unit,
     onShowArchived: () -> Unit,
+    onNavigateToThemeSettings: () -> Unit = {},
+    onNavigateToDefaultModelSettings: () -> Unit = {},
     modifier: Modifier = Modifier,
     viewModel: ConversationListViewModel = hiltViewModel()
 ) {
@@ -74,6 +78,36 @@ fun ConversationListScreen(
                         }
                         IconButton(onClick = onShowArchived) {
                             Icon(Icons.Default.Star, contentDescription = "Ver archivadas")
+                        }
+                        
+                        // Settings menu
+                        var showMenu by remember { mutableStateOf(false) }
+                        Box {
+                            IconButton(onClick = { showMenu = true }) {
+                                Icon(Icons.Default.MoreVert, contentDescription = "Configuración")
+                            }
+                            
+                            DropdownMenu(
+                                expanded = showMenu,
+                                onDismissRequest = { showMenu = false }
+                            ) {
+                                DropdownMenuItem(
+                                    text = { Text("Apariencia") },
+                                    leadingIcon = { Icon(Icons.Default.Star, contentDescription = null) },
+                                    onClick = {
+                                        onNavigateToThemeSettings()
+                                        showMenu = false
+                                    }
+                                )
+                                DropdownMenuItem(
+                                    text = { Text("Modelo por defecto") },
+                                    leadingIcon = { Icon(Icons.Default.Settings, contentDescription = null) },
+                                    onClick = {
+                                        onNavigateToDefaultModelSettings()
+                                        showMenu = false
+                                    }
+                                )
+                            }
                         }
                     }
                 }

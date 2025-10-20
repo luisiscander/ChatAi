@@ -10,9 +10,12 @@ import com.example.chatai.domain.usecase.OnboardingStatus
 import com.example.chatai.presentation.screens.ApiKeySetupScreen
 import com.example.chatai.presentation.screens.ChatScreen
 import com.example.chatai.presentation.screens.ConversationListScreen
+import com.example.chatai.presentation.screens.DefaultModelSettingsScreen
+import com.example.chatai.presentation.screens.ExportConversationScreen
 import com.example.chatai.presentation.screens.MainScreen
 import com.example.chatai.presentation.screens.OnboardingScreen
 import com.example.chatai.presentation.screens.SplashScreen
+import com.example.chatai.presentation.screens.ThemeSettingsScreen
 
 // Navigation routes
 object Routes {
@@ -22,6 +25,9 @@ object Routes {
     const val CONVERSATION_LIST = "conversation_list"
     const val CHAT = "chat/{conversationId}"
     const val ARCHIVED_CONVERSATIONS = "archived_conversations"
+    const val THEME_SETTINGS = "theme_settings"
+    const val DEFAULT_MODEL_SETTINGS = "default_model_settings"
+    const val EXPORT_CONVERSATION = "export_conversation/{conversationId}"
 }
 
 @Composable
@@ -30,6 +36,9 @@ fun NavigationManager(
     isLoading: Boolean,
     onContinueClicked: () -> Unit,
     onApiKeyConfigured: () -> Unit,
+    onNavigateToThemeSettings: () -> Unit = {},
+    onNavigateToDefaultModelSettings: () -> Unit = {},
+    onNavigateToExportConversation: (String) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val navController = rememberNavController()
@@ -85,6 +94,12 @@ fun NavigationManager(
                 onShowArchived = {
                     navController.navigate(Routes.ARCHIVED_CONVERSATIONS)
                 },
+                onNavigateToThemeSettings = {
+                    navController.navigate(Routes.THEME_SETTINGS)
+                },
+                onNavigateToDefaultModelSettings = {
+                    navController.navigate(Routes.DEFAULT_MODEL_SETTINGS)
+                },
                 modifier = modifier
             )
         }
@@ -95,6 +110,9 @@ fun NavigationManager(
                 conversationId = conversationId,
                 onBackClicked = {
                     navController.popBackStack()
+                },
+                onNavigateToExportConversation = {
+                    navController.navigate(Routes.EXPORT_CONVERSATION.replace("{conversationId}", conversationId))
                 },
                 modifier = modifier
             )
@@ -110,6 +128,41 @@ fun NavigationManager(
                     navController.navigate(Routes.CHAT.replace("{conversationId}", newConversationId))
                 },
                 onShowArchived = {
+                    navController.popBackStack()
+                },
+                onNavigateToThemeSettings = {
+                    navController.navigate(Routes.THEME_SETTINGS)
+                },
+                onNavigateToDefaultModelSettings = {
+                    navController.navigate(Routes.DEFAULT_MODEL_SETTINGS)
+                },
+                modifier = modifier
+            )
+        }
+        
+        composable(Routes.THEME_SETTINGS) {
+            ThemeSettingsScreen(
+                onBackClicked = {
+                    navController.popBackStack()
+                },
+                modifier = modifier
+            )
+        }
+        
+        composable(Routes.DEFAULT_MODEL_SETTINGS) {
+            DefaultModelSettingsScreen(
+                onBackClicked = {
+                    navController.popBackStack()
+                },
+                modifier = modifier
+            )
+        }
+        
+        composable(Routes.EXPORT_CONVERSATION) { backStackEntry ->
+            val conversationId = backStackEntry.arguments?.getString("conversationId") ?: ""
+            ExportConversationScreen(
+                conversationId = conversationId,
+                onBackClicked = {
                     navController.popBackStack()
                 },
                 modifier = modifier

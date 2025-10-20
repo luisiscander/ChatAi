@@ -36,11 +36,17 @@ class ConversationRepositoryImpl @Inject constructor(
 
     override fun getConversationById(id: String): Flow<Conversation?> {
         // Return a flow that emits the current value immediately
+        android.util.Log.d("ConversationRepo", "Getting conversation by ID: $id")
         val currentConversation = _conversations.value.find { it.id == id }
+        android.util.Log.d("ConversationRepo", "Found conversation: ${currentConversation != null}, Total in list: ${_conversations.value.size}")
+        if (currentConversation != null) {
+            android.util.Log.d("ConversationRepo", "Conversation title: ${currentConversation.title}")
+        }
         return flowOf(currentConversation)
     }
 
     override suspend fun createConversation(title: String, model: String): Conversation {
+        android.util.Log.d("ConversationRepo", "Creating conversation: title=$title, model=$model")
         val newConversation = Conversation(
             id = UUID.randomUUID().toString(),
             title = title,
@@ -52,10 +58,14 @@ class ConversationRepositoryImpl @Inject constructor(
             updatedAt = Date()
         )
         
+        android.util.Log.d("ConversationRepo", "Created conversation with ID: ${newConversation.id}")
+        
         // Add to in-memory storage
         val currentConversations = _conversations.value.toMutableList()
         currentConversations.add(newConversation)
         _conversations.value = currentConversations
+        
+        android.util.Log.d("ConversationRepo", "Conversation added to list. Total conversations: ${_conversations.value.size}")
         
         return newConversation
     }
@@ -82,11 +92,9 @@ class ConversationRepositoryImpl @Inject constructor(
     }
 
     override fun getMessagesByConversationId(conversationId: String): Flow<List<Message>> {
-        return messages.let { flow ->
-            flow.map { messageMap ->
-                messageMap[conversationId] ?: emptyList()
-            }
-        }
+        // Return a flow that emits the current value immediately
+        val currentMessages = _messages.value[conversationId] ?: emptyList()
+        return flowOf(currentMessages)
     }
     
     // Synchronous method to get messages by conversation ID immediately

@@ -299,6 +299,7 @@ class ChatViewModel @Inject constructor(
 
     // Issue #64: Cargar historial completo
     fun loadConversationHistory(conversationId: String) {
+        android.util.Log.d("ChatViewModel", "loadConversationHistory called with ID: $conversationId")
         viewModelScope.launch {
             try {
                 _uiState.value = _uiState.value.copy(
@@ -306,20 +307,30 @@ class ChatViewModel @Inject constructor(
                     conversationId = conversationId,
                     error = null
                 )
+                android.util.Log.d("ChatViewModel", "State set to loading")
 
                 // Load conversation - now uses flowOf() which emits immediately
                 val conversation = try {
-                    getConversationByIdUseCase(conversationId)
+                    android.util.Log.d("ChatViewModel", "Calling getConversationByIdUseCase...")
+                    val result = getConversationByIdUseCase(conversationId)
+                    android.util.Log.d("ChatViewModel", "Got conversation: ${result?.title}")
+                    result
                 } catch (e: Exception) {
+                    android.util.Log.e("ChatViewModel", "Error getting conversation", e)
                     null
                 }
                 
                 val conversationTitle = conversation?.title ?: "Nueva conversación"
+                android.util.Log.d("ChatViewModel", "Conversation title: $conversationTitle")
 
                 // Load messages - use sync method to avoid infinite waiting
                 val messages = try {
-                    getMessagesSyncUseCase(conversationId)
+                    android.util.Log.d("ChatViewModel", "Loading messages...")
+                    val result = getMessagesSyncUseCase(conversationId)
+                    android.util.Log.d("ChatViewModel", "Got ${result.size} messages")
+                    result
                 } catch (e: Exception) {
+                    android.util.Log.e("ChatViewModel", "Error getting messages", e)
                     emptyList()
                 }
                 
@@ -328,7 +339,9 @@ class ChatViewModel @Inject constructor(
                     isLoadingHistory = false,
                     conversationTitle = conversationTitle
                 )
+                android.util.Log.d("ChatViewModel", "State updated successfully")
             } catch (e: Exception) {
+                android.util.Log.e("ChatViewModel", "Exception in loadConversationHistory", e)
                 _uiState.value = _uiState.value.copy(
                     isLoadingHistory = false,
                     error = "Error al cargar conversación: ${e.message}"

@@ -43,13 +43,15 @@ fun Navigation3Manager(
     LaunchedEffect(conversationCreationState.conversationId, conversationCreationState.error) {
         conversationCreationState.conversationId?.let { conversationId ->
             // Navigate to chat with the created conversation ID
+            android.util.Log.d("Navigation3Manager", "Conversation created, navigating to chat with ID: $conversationId")
             backStack = backStack + NavEntry("chat", conversationId)
+            android.util.Log.d("Navigation3Manager", "Backstack updated, clearing state")
             conversationCreationViewModel.clearState()
         }
         
         conversationCreationState.error?.let { error ->
             // Handle error - could show a snackbar or error dialog
-            println("Error creating conversation: $error")
+            android.util.Log.e("Navigation3Manager", "Error creating conversation: $error")
             conversationCreationViewModel.clearState()
         }
     }

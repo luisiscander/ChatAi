@@ -303,13 +303,18 @@ class ChatViewModel @Inject constructor(
             try {
                 _uiState.value = _uiState.value.copy(
                     isLoadingHistory = true,
-                    conversationId = conversationId
+                    conversationId = conversationId,
+                    error = null
                 )
+
+                // Add a small delay to ensure the conversation is fully created
+                kotlinx.coroutines.delay(50)
 
                 // Load conversation title - handle case where conversation doesn't exist
                 val conversation = try {
                     getConversationByIdUseCase(conversationId)
                 } catch (e: Exception) {
+                    println("Error loading conversation: ${e.message}")
                     null
                 }
                 
@@ -319,6 +324,7 @@ class ChatViewModel @Inject constructor(
                 val messages = try {
                     getMessagesSyncUseCase(conversationId)
                 } catch (e: Exception) {
+                    println("Error loading messages: ${e.message}")
                     emptyList()
                 }
                 
@@ -328,6 +334,7 @@ class ChatViewModel @Inject constructor(
                     conversationTitle = conversationTitle
                 )
             } catch (e: Exception) {
+                println("Error in loadConversationHistory: ${e.message}")
                 _uiState.value = _uiState.value.copy(
                     isLoadingHistory = false,
                     error = "Error al cargar conversación: ${e.message}"

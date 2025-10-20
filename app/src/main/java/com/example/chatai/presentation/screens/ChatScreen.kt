@@ -38,6 +38,13 @@ fun ChatScreen(
     var showDeleteDialog by remember { mutableStateOf(false) }
     var messageToDelete by remember { mutableStateOf<Message?>(null) }
     
+    // Load conversation history when screen opens
+    LaunchedEffect(conversationId) {
+        if (conversationId.isNotEmpty()) {
+            viewModel.loadConversationHistory(conversationId)
+        }
+    }
+    
     // Auto-scroll to bottom when new messages arrive
     LaunchedEffect(uiState.messages.size) {
         if (uiState.messages.isNotEmpty() && uiState.isAutoScrollEnabled) {

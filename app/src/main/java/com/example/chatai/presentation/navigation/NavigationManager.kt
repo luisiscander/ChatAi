@@ -1,7 +1,11 @@
 package com.example.chatai.presentation.navigation
 
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import com.example.chatai.domain.usecase.OnboardingStatus
 import com.example.chatai.presentation.screens.ApiKeySetupScreen
 import com.example.chatai.presentation.screens.ChatScreen
@@ -9,6 +13,16 @@ import com.example.chatai.presentation.screens.ConversationListScreen
 import com.example.chatai.presentation.screens.MainScreen
 import com.example.chatai.presentation.screens.OnboardingScreen
 import com.example.chatai.presentation.screens.SplashScreen
+
+// Navigation routes
+object Routes {
+    const val SPLASH = "splash"
+    const val ONBOARDING = "onboarding"
+    const val API_KEY_SETUP = "api_key_setup"
+    const val CONVERSATION_LIST = "conversation_list"
+    const val CHAT = "chat/{conversationId}"
+    const val ARCHIVED_CONVERSATIONS = "archived_conversations"
+}
 
 @Composable
 fun NavigationManager(
@@ -18,40 +32,88 @@ fun NavigationManager(
     onApiKeyConfigured: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    when {
-        isLoading -> {
+    val navController = rememberNavController()
+    
+    // Determine initial route based on onboarding status
+    val startRoute = when {
+        isLoading -> Routes.SPLASH
+        onboardingStatus == OnboardingStatus.ShowOnboarding -> Routes.ONBOARDING
+        onboardingStatus == OnboardingStatus.ShowApiKeySetup -> Routes.API_KEY_SETUP
+        onboardingStatus == OnboardingStatus.ShowMainApp -> Routes.CONVERSATION_LIST
+        else -> Routes.SPLASH
+    }
+    
+    NavHost(
+        navController = navController,
+        startDestination = startRoute,
+        modifier = modifier
+    ) {
+        composable(Routes.SPLASH) {
             SplashScreen(modifier = modifier)
         }
-        onboardingStatus == OnboardingStatus.ShowOnboarding -> {
+        
+        composable(Routes.ONBOARDING) {
             OnboardingScreen(
-                onContinueClicked = onContinueClicked,
+                onContinueClicked = {
+                    onContinueClicked()
+                    navController.navigate(Routes.API_KEY_SETUP)
+                },
                 modifier = modifier
             )
         }
-        onboardingStatus == OnboardingStatus.ShowApiKeySetup -> {
+        
+        composable(Routes.API_KEY_SETUP) {
             ApiKeySetupScreen(
-                onApiKeyConfigured = onApiKeyConfigured,
+                onApiKeyConfigured = {
+                    onApiKeyConfigured()
+                    navController.navigate(Routes.CONVERSATION_LIST)
+                },
                 modifier = modifier
             )
         }
-        onboardingStatus == OnboardingStatus.ShowMainApp -> {
+        
+        composable(Routes.CONVERSATION_LIST) {
             ConversationListScreen(
                 onConversationClick = { conversationId ->
-                    // For now, show a simple chat screen
-                    // TODO: Implement proper navigation between screens
+                    navController.navigate(Routes.CHAT.replace("{conversationId}", conversationId))
                 },
                 onCreateConversation = {
-                    // TODO: Navigate to create conversation
+                    // Create a new conversation and navigate to chat
+                    val newConversationId = "new_conversation_${System.currentTimeMillis()}"
+                    navController.navigate(Routes.CHAT.replace("{conversationId}", newConversationId))
                 },
                 onShowArchived = {
-                    // TODO: Show archived conversations
+                    navController.navigate(Routes.ARCHIVED_CONVERSATIONS)
                 },
                 modifier = modifier
             )
         }
-        else -> {
-            // Fallback a splash screen
-            SplashScreen(modifier = modifier)
+        
+        composable(Routes.CHAT) { backStackEntry ->
+            val conversationId = backStackEntry.arguments?.getString("conversationId") ?: ""
+            ChatScreen(
+                conversationId = conversationId,
+                onBackClicked = {
+                    navController.popBackStack()
+                },
+                modifier = modifier
+            )
+        }
+        
+        composable(Routes.ARCHIVED_CONVERSATIONS) {
+            ConversationListScreen(
+                onConversationClick = { conversationId ->
+                    navController.navigate(Routes.CHAT.replace("{conversationId}", conversationId))
+                },
+                onCreateConversation = {
+                    val newConversationId = "new_conversation_${System.currentTimeMillis()}"
+                    navController.navigate(Routes.CHAT.replace("{conversationId}", newConversationId))
+                },
+                onShowArchived = {
+                    navController.popBackStack()
+                },
+                modifier = modifier
+            )
         }
     }
 }

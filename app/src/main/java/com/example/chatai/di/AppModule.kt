@@ -103,11 +103,19 @@ object AppModuleProvider {
         return CancelStreamingUseCase()
     }
     
-    @Provides
-    @Singleton
-    fun provideGetMessagesUseCase(
-        conversationRepository: ConversationRepository
-    ): GetMessagesUseCase {
-        return GetMessagesUseCase(conversationRepository)
-    }
+           @Provides
+           @Singleton
+           fun provideGetMessagesUseCase(
+               conversationRepository: ConversationRepository
+           ): GetMessagesUseCase {
+               return GetMessagesUseCase(conversationRepository)
+           }
+           
+           @Provides
+           @Singleton
+           fun provideGetMessagesWithPaginationUseCase(
+               conversationRepository: ConversationRepository
+           ): GetMessagesWithPaginationUseCase {
+               return GetMessagesWithPaginationUseCase(conversationRepository)
+           }
 }

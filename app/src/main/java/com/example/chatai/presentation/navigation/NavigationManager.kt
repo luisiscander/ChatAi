@@ -7,6 +7,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.chatai.domain.usecase.OnboardingStatus
+import com.example.chatai.presentation.ConversationNavigationViewModel
 import com.example.chatai.presentation.screens.ApiKeySetupScreen
 import com.example.chatai.presentation.screens.ChatScreen
 import com.example.chatai.presentation.screens.ConversationListScreen
@@ -16,6 +17,7 @@ import com.example.chatai.presentation.screens.MainScreen
 import com.example.chatai.presentation.screens.OnboardingScreen
 import com.example.chatai.presentation.screens.SplashScreen
 import com.example.chatai.presentation.screens.ThemeSettingsScreen
+import androidx.hilt.navigation.compose.hiltViewModel
 
 // Navigation routes
 object Routes {
@@ -42,6 +44,7 @@ fun NavigationManager(
     modifier: Modifier = Modifier
 ) {
     val navController = rememberNavController()
+    val conversationNavViewModel: ConversationNavigationViewModel = hiltViewModel()
     
     // Determine initial route based on onboarding status
     val startRoute = when {
@@ -88,8 +91,9 @@ fun NavigationManager(
                 },
                 onCreateConversation = {
                     // Create a new conversation and navigate to chat
-                    val newConversationId = "new_conversation_${System.currentTimeMillis()}"
-                    navController.navigate(Routes.CHAT.replace("{conversationId}", newConversationId))
+                    conversationNavViewModel.createNewConversation { conversationId ->
+                        navController.navigate(Routes.CHAT.replace("{conversationId}", conversationId))
+                    }
                 },
                 onShowArchived = {
                     navController.navigate(Routes.ARCHIVED_CONVERSATIONS)
@@ -124,8 +128,10 @@ fun NavigationManager(
                     navController.navigate(Routes.CHAT.replace("{conversationId}", conversationId))
                 },
                 onCreateConversation = {
-                    val newConversationId = "new_conversation_${System.currentTimeMillis()}"
-                    navController.navigate(Routes.CHAT.replace("{conversationId}", newConversationId))
+                    // Create a new conversation and navigate to chat
+                    conversationNavViewModel.createNewConversation { conversationId ->
+                        navController.navigate(Routes.CHAT.replace("{conversationId}", conversationId))
+                    }
                 },
                 onShowArchived = {
                     navController.popBackStack()

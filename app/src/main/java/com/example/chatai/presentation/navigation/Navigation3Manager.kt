@@ -34,15 +34,28 @@ fun Navigation3Manager(
     
     // Determine initial route
     LaunchedEffect(onboardingStatus, isLoading) {
-        if (backStack.isEmpty()) {
-            val initialEntry = when {
-                isLoading -> NavEntry("splash")
-                onboardingStatus == OnboardingStatus.ShowOnboarding -> NavEntry("onboarding")
-                onboardingStatus == OnboardingStatus.ShowApiKeySetup -> NavEntry("api_key_setup")
-                onboardingStatus == OnboardingStatus.ShowMainApp -> NavEntry("conversation_list")
-                else -> NavEntry("splash")
+        // If we're still loading, show splash
+        if (isLoading) {
+            if (backStack.isEmpty() || backStack.firstOrNull()?.key != "splash") {
+                backStack = listOf(NavEntry("splash"))
             }
-            backStack = listOf(initialEntry)
+            return@LaunchedEffect
+        }
+        
+        // Loading is complete, determine next screen based on onboarding status
+        val targetEntry = when (onboardingStatus) {
+            OnboardingStatus.ShowOnboarding -> NavEntry("onboarding")
+            OnboardingStatus.ShowApiKeySetup -> NavEntry("api_key_setup")
+            OnboardingStatus.ShowMainApp -> NavEntry("conversation_list")
+            null -> NavEntry("splash")
+        }
+        
+        // Update back stack if we need to navigate away from splash
+        val currentFirst = backStack.firstOrNull()
+        if (currentFirst?.key == "splash" && !isLoading) {
+            backStack = listOf(targetEntry)
+        } else if (backStack.isEmpty()) {
+            backStack = listOf(targetEntry)
         }
     }
     

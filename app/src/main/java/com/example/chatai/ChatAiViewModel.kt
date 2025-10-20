@@ -31,6 +31,7 @@ class ChatAiViewModel @Inject constructor(
             // Mostrar splash screen por al menos 2 segundos
             delay(2000)
             val status = checkOnboardingStatusUseCase()
+            println("DEBUG: Onboarding status determined: $status")
             _onboardingStatus.value = status
             _isLoading.value = false
         }

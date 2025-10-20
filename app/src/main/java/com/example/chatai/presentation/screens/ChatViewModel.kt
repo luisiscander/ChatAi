@@ -35,6 +35,10 @@ class ChatViewModel @Inject constructor(
     private val getMessagesSyncUseCase: GetMessagesSyncUseCase
 ) : ViewModel() {
 
+    init {
+        android.util.Log.d("ChatViewModel", "ChatViewModel created")
+    }
+
     private val _uiState = MutableStateFlow(ChatUiState())
     val uiState: StateFlow<ChatUiState> = _uiState.asStateFlow()
 

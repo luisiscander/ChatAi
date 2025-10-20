@@ -38,20 +38,32 @@ fun ChatScreen(
     modifier: Modifier = Modifier,
     viewModel: ChatViewModel = hiltViewModel()
 ) {
+    android.util.Log.d("ChatScreen", "ChatScreen composing with conversationId: $conversationId")
+    
     val uiState by viewModel.uiState.collectAsState()
+    android.util.Log.d("ChatScreen", "uiState collected: $uiState")
+    
     val context = LocalContext.current
     val listState = rememberLazyListState()
     var showDeleteDialog by remember { mutableStateOf(false) }
     var messageToDelete by remember { mutableStateOf<Message?>(null) }
     
+    android.util.Log.d("ChatScreen", "Setting up LaunchedEffect for conversationId: $conversationId")
+    
     // Load conversation history when screen opens
     LaunchedEffect(conversationId) {
+        android.util.Log.d("ChatScreen", "LaunchedEffect executing for conversationId: $conversationId")
         if (conversationId.isNotEmpty()) {
             try {
+                android.util.Log.d("ChatScreen", "Calling loadConversationHistory")
                 viewModel.loadConversationHistory(conversationId)
+                android.util.Log.d("ChatScreen", "loadConversationHistory completed")
             } catch (e: Exception) {
                 // Handle any errors gracefully
+                android.util.Log.e("ChatScreen", "Error loading conversation history", e)
             }
+        } else {
+            android.util.Log.w("ChatScreen", "conversationId is empty, skipping load")
         }
     }
     

@@ -310,6 +310,13 @@ class ChatViewModel @Inject constructor(
         }
     }
 
+    // Initialize conversation without LaunchedEffect complications
+    fun initializeConversation(conversationId: String) {
+        if (_uiState.value.conversationId != conversationId) {
+            loadConversationHistory(conversationId)
+        }
+    }
+
     // Issue #66: Scroll manual en historial
     fun onManualScroll() {
         _uiState.value = _uiState.value.copy(

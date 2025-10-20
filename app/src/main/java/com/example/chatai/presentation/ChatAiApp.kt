@@ -4,7 +4,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.chatai.ChatAiViewModel
-import com.example.chatai.presentation.navigation.Navigation3Manager
+import com.example.chatai.presentation.navigation.NavigationManager
 
 @Composable
 fun ChatAiApp(
@@ -18,7 +18,7 @@ fun ChatAiApp(
         viewModel.checkOnboardingStatus()
     }
     
-    Navigation3Manager(
+    NavigationManager(
         onboardingStatus = onboardingStatus,
         isLoading = isLoading,
         onContinueClicked = {

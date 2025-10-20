@@ -11,8 +11,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.launch
 import java.util.*
 import javax.inject.Inject
@@ -30,14 +28,8 @@ class ChatViewModel @Inject constructor(
     private val getMessagesWithPaginationUseCase: GetMessagesWithPaginationUseCase,
     private val checkNetworkConnectionUseCase: CheckNetworkConnectionUseCase,
     private val validateApiKeyConnectionUseCase: ValidateApiKeyConnectionUseCase,
-    private val userPreferencesRepository: UserPreferencesRepository,
-    private val getConversationByIdUseCase: GetConversationByIdUseCase,
-    private val getMessagesSyncUseCase: GetMessagesSyncUseCase
+    private val userPreferencesRepository: UserPreferencesRepository
 ) : ViewModel() {
-
-    init {
-        android.util.Log.d("ChatViewModel", "ChatViewModel created")
-    }
 
     private val _uiState = MutableStateFlow(ChatUiState())
     val uiState: StateFlow<ChatUiState> = _uiState.asStateFlow()
@@ -303,52 +295,16 @@ class ChatViewModel @Inject constructor(
 
     // Issue #64: Cargar historial completo
     fun loadConversationHistory(conversationId: String) {
-        android.util.Log.d("ChatViewModel", "loadConversationHistory called with ID: $conversationId")
         viewModelScope.launch {
-            try {
-                _uiState.value = _uiState.value.copy(
-                    isLoadingHistory = true,
-                    conversationId = conversationId,
-                    error = null
-                )
-                android.util.Log.d("ChatViewModel", "State set to loading")
+            _uiState.value = _uiState.value.copy(
+                isLoadingHistory = true,
+                conversationId = conversationId
+            )
 
-                // Load conversation - now uses flowOf() which emits immediately
-                val conversation = try {
-                    android.util.Log.d("ChatViewModel", "Calling getConversationByIdUseCase...")
-                    val result = getConversationByIdUseCase(conversationId)
-                    android.util.Log.d("ChatViewModel", "Got conversation: ${result?.title}")
-                    result
-                } catch (e: Exception) {
-                    android.util.Log.e("ChatViewModel", "Error getting conversation", e)
-                    null
-                }
-                
-                val conversationTitle = conversation?.title ?: "Nueva conversación"
-                android.util.Log.d("ChatViewModel", "Conversation title: $conversationTitle")
-
-                // Load messages - use sync method to avoid infinite waiting
-                val messages = try {
-                    android.util.Log.d("ChatViewModel", "Loading messages...")
-                    val result = getMessagesSyncUseCase(conversationId)
-                    android.util.Log.d("ChatViewModel", "Got ${result.size} messages")
-                    result
-                } catch (e: Exception) {
-                    android.util.Log.e("ChatViewModel", "Error getting messages", e)
-                    emptyList()
-                }
-                
+            getMessagesUseCase(conversationId).collect { messages ->
                 _uiState.value = _uiState.value.copy(
                     messages = messages,
-                    isLoadingHistory = false,
-                    conversationTitle = conversationTitle
-                )
-                android.util.Log.d("ChatViewModel", "State updated successfully")
-            } catch (e: Exception) {
-                android.util.Log.e("ChatViewModel", "Exception in loadConversationHistory", e)
-                _uiState.value = _uiState.value.copy(
-                    isLoadingHistory = false,
-                    error = "Error al cargar conversación: ${e.message}"
+                    isLoadingHistory = false
                 )
             }
         }

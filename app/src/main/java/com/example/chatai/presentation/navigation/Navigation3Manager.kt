@@ -40,18 +40,28 @@ fun Navigation3Manager(
     val conversationCreationState by conversationCreationViewModel.uiState.collectAsState()
     
     // Handle conversation creation result
-    LaunchedEffect(conversationCreationState.conversationId, conversationCreationState.error) {
-        conversationCreationState.conversationId?.let { conversationId ->
-            // Navigate to chat with the created conversation ID
-            android.util.Log.d("Navigation3Manager", "Conversation created, navigating to chat with ID: $conversationId")
-            backStack = backStack + NavEntry("chat", conversationId)
-            android.util.Log.d("Navigation3Manager", "Backstack updated, clearing state")
-            conversationCreationViewModel.clearState()
-        }
+    LaunchedEffect(conversationCreationState.conversationId) {
+        val conversationId = conversationCreationState.conversationId
+        android.util.Log.d("Navigation3Manager", "LaunchedEffect triggered with conversationId: $conversationId")
         
-        conversationCreationState.error?.let { error ->
-            // Handle error - could show a snackbar or error dialog
+        if (conversationId != null && conversationId.isNotEmpty()) {
+            // Navigate to chat with the created conversation ID
+            android.util.Log.d("Navigation3Manager", "Navigating to chat with ID: $conversationId")
+            backStack = backStack + NavEntry("chat", conversationId)
+            android.util.Log.d("Navigation3Manager", "Backstack updated to: ${backStack.map { it.key }}")
+            
+            // Clear state AFTER navigation completes
+            conversationCreationViewModel.clearState()
+            android.util.Log.d("Navigation3Manager", "State cleared")
+        }
+    }
+    
+    // Handle errors separately
+    LaunchedEffect(conversationCreationState.error) {
+        val error = conversationCreationState.error
+        if (error != null) {
             android.util.Log.e("Navigation3Manager", "Error creating conversation: $error")
+            // TODO: Show error snackbar or dialog
             conversationCreationViewModel.clearState()
         }
     }

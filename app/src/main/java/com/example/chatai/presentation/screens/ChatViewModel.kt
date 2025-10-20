@@ -301,10 +301,16 @@ class ChatViewModel @Inject constructor(
                 conversationId = conversationId
             )
 
-            getMessagesUseCase(conversationId).collect { messages ->
+            try {
+                val messages = getMessagesUseCase(conversationId).first()
                 _uiState.value = _uiState.value.copy(
                     messages = messages,
                     isLoadingHistory = false
+                )
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(
+                    isLoadingHistory = false,
+                    error = "Error al cargar historial: ${e.message}"
                 )
             }
         }

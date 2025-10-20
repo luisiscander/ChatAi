@@ -11,6 +11,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -32,25 +33,24 @@ class DefaultModelSettingsViewModel @Inject constructor(
                 val modelsResult = getAvailableModelsUseCase()
                 val currentDefaultModel = getDefaultModelUseCase()
                 
-                modelsResult.collect { result ->
-                    when (result) {
-                        is GetModelsResult.Success -> {
-                            _uiState.value = _uiState.value.copy(
-                                availableModels = result.models,
-                                selectedModelId = currentDefaultModel,
-                                originalSelectedModelId = currentDefaultModel,
-                                isLoading = false
-                            )
-                        }
-                        is GetModelsResult.Error -> {
-                            _uiState.value = _uiState.value.copy(
-                                isLoading = false,
-                                errorMessage = "Error al cargar modelos: ${result.message}"
-                            )
-                        }
-                        is GetModelsResult.Loading -> {
-                            _uiState.value = _uiState.value.copy(isLoading = true)
-                        }
+                val result = modelsResult.first()
+                when (result) {
+                    is GetModelsResult.Success -> {
+                        _uiState.value = _uiState.value.copy(
+                            availableModels = result.models,
+                            selectedModelId = currentDefaultModel,
+                            originalSelectedModelId = currentDefaultModel,
+                            isLoading = false
+                        )
+                    }
+                    is GetModelsResult.Error -> {
+                        _uiState.value = _uiState.value.copy(
+                            isLoading = false,
+                            errorMessage = "Error al cargar modelos: ${result.message}"
+                        )
+                    }
+                    is GetModelsResult.Loading -> {
+                        _uiState.value = _uiState.value.copy(isLoading = true)
                     }
                 }
             } catch (e: Exception) {

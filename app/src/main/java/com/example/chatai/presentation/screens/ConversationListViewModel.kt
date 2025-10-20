@@ -11,7 +11,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -34,20 +34,19 @@ class ConversationListViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true)
             
-            getConversationsUseCase(false)
-                .catch { exception ->
-                    _uiState.value = _uiState.value.copy(
-                        isLoading = false,
-                        error = exception.message
-                    )
-                }
-                .collect { conversations ->
-                    _uiState.value = _uiState.value.copy(
-                        isLoading = false,
-                        conversations = conversations,
-                        error = null
-                    )
-                }
+            try {
+                val conversations = getConversationsUseCase(false).first()
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    conversations = conversations,
+                    error = null
+                )
+            } catch (exception: Exception) {
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    error = exception.message
+                )
+            }
         }
     }
 
@@ -71,19 +70,18 @@ class ConversationListViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(searchQuery = query)
             
-            searchConversationsUseCase(query)
-                .catch { exception ->
-                    _uiState.value = _uiState.value.copy(
-                        error = exception.message,
-                        searchResult = null
-                    )
-                }
-                .collect { searchResult ->
-                    _uiState.value = _uiState.value.copy(
-                        searchResult = searchResult,
-                        error = null
-                    )
-                }
+            try {
+                val searchResult = searchConversationsUseCase(query).first()
+                _uiState.value = _uiState.value.copy(
+                    searchResult = searchResult,
+                    error = null
+                )
+            } catch (exception: Exception) {
+                _uiState.value = _uiState.value.copy(
+                    error = exception.message,
+                    searchResult = null
+                )
+            }
         }
     }
 

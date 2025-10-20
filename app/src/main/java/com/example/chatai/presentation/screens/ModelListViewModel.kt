@@ -8,7 +8,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -28,15 +28,14 @@ class ModelListViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(result = GetModelsResult.Loading)
             
-            getAvailableModelsUseCase()
-                .catch { exception ->
-                    _uiState.value = _uiState.value.copy(
-                        result = GetModelsResult.Error(exception.message ?: "Error al cargar modelos")
-                    )
-                }
-                .collect { result ->
-                    _uiState.value = _uiState.value.copy(result = result)
-                }
+            try {
+                val result = getAvailableModelsUseCase().first()
+                _uiState.value = _uiState.value.copy(result = result)
+            } catch (exception: Exception) {
+                _uiState.value = _uiState.value.copy(
+                    result = GetModelsResult.Error(exception.message ?: "Error al cargar modelos")
+                )
+            }
         }
     }
 

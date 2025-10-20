@@ -22,6 +22,9 @@ class ChatViewModel @Inject constructor(
     private val deleteMessageUseCase: DeleteMessageUseCase,
     private val sendMessageUseCase: SendMessageUseCase,
     private val getAiResponseUseCase: GetAiResponseUseCase,
+    private val streamAiResponseUseCase: StreamAiResponseUseCase,
+    private val cancelStreamingUseCase: CancelStreamingUseCase,
+    private val getMessagesUseCase: GetMessagesUseCase,
     private val checkNetworkConnectionUseCase: CheckNetworkConnectionUseCase,
     private val validateApiKeyConnectionUseCase: ValidateApiKeyConnectionUseCase,
     private val userPreferencesRepository: UserPreferencesRepository
@@ -128,26 +131,61 @@ class ChatViewModel @Inject constructor(
                             isTyping = true
                         )
 
-                        // Issue #54: Recibir respuesta del modelo
-                        val aiResponseResult = getAiResponseUseCase(userMessage, apiKey)
-                        when (aiResponseResult) {
-                            is GetAiResponseResult.Success -> {
-                                val updatedMessages = currentMessages.toMutableList()
-                                updatedMessages.add(aiResponseResult.message)
+                        // Issue #59: Recibir respuesta con streaming exitoso
+                        _uiState.value = _uiState.value.copy(
+                            isStreaming = true,
+                            canCancelStreaming = true,
+                            streamingText = "",
+                            isTyping = false
+                        )
 
-                                _uiState.value = _uiState.value.copy(
-                                    messages = updatedMessages,
-                                    isTyping = false,
-                                    isEnabled = true,
-                                    error = null
-                                )
+                        // Cancelar cualquier streaming anterior
+                        cancelStreamingUseCase.reset()
+
+                        // Iniciar streaming
+                        streamAiResponseUseCase(userMessage, apiKey).collect { chunk ->
+                            if (cancelStreamingUseCase.isCancelled()) {
+                                return@collect
                             }
-                            is GetAiResponseResult.Error -> {
-                                _uiState.value = _uiState.value.copy(
-                                    isTyping = false,
-                                    isEnabled = true,
-                                    error = aiResponseResult.message
-                                )
+
+                            when (chunk) {
+                                is StreamChunk.Text -> {
+                                    _uiState.value = _uiState.value.copy(
+                                        streamingText = _uiState.value.streamingText + chunk.content
+                                    )
+                                }
+                                is StreamChunk.Complete -> {
+                                    // Guardar mensaje completo cuando termine el streaming
+                                    val aiMessage = Message(
+                                        id = UUID.randomUUID().toString(),
+                                        conversationId = userMessage.conversationId,
+                                        content = _uiState.value.streamingText,
+                                        isFromUser = false,
+                                        timestamp = Date(),
+                                        model = "gpt-4"
+                                    )
+
+                                    val updatedMessages = currentMessages.toMutableList()
+                                    updatedMessages.add(aiMessage)
+
+                                    _uiState.value = _uiState.value.copy(
+                                        messages = updatedMessages,
+                                        isStreaming = false,
+                                        canCancelStreaming = false,
+                                        streamingText = "",
+                                        isEnabled = true,
+                                        error = null
+                                    )
+                                }
+                                is StreamChunk.Error -> {
+                                    _uiState.value = _uiState.value.copy(
+                                        isStreaming = false,
+                                        canCancelStreaming = false,
+                                        streamingText = "",
+                                        isEnabled = true,
+                                        error = chunk.message
+                                    )
+                                }
                             }
                         }
                     }
@@ -208,15 +246,72 @@ class ChatViewModel @Inject constructor(
         }
     }
 
+    // Issue #60: Cancelar streaming en progreso
+    fun cancelStreaming() {
+        cancelStreamingUseCase.cancelStreaming()
+        
+        // Guardar el texto generado hasta el momento
+        val streamingText = _uiState.value.streamingText
+        if (streamingText.isNotEmpty()) {
+            val aiMessage = Message(
+                id = UUID.randomUUID().toString(),
+                conversationId = _uiState.value.conversationId,
+                content = streamingText + "\n\n[Respuesta interrumpida]",
+                isFromUser = false,
+                timestamp = Date(),
+                model = "gpt-4"
+            )
+
+            val updatedMessages = _uiState.value.messages.toMutableList()
+            updatedMessages.add(aiMessage)
+
+            _uiState.value = _uiState.value.copy(
+                messages = updatedMessages,
+                isStreaming = false,
+                canCancelStreaming = false,
+                streamingText = "",
+                isEnabled = true
+            )
+        } else {
+            _uiState.value = _uiState.value.copy(
+                isStreaming = false,
+                canCancelStreaming = false,
+                streamingText = "",
+                isEnabled = true
+            )
+        }
+    }
+
+    // Issue #64: Cargar historial completo
+    fun loadConversationHistory(conversationId: String) {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(
+                isLoadingHistory = true,
+                conversationId = conversationId
+            )
+
+            getMessagesUseCase(conversationId).collect { messages ->
+                _uiState.value = _uiState.value.copy(
+                    messages = messages,
+                    isLoadingHistory = false
+                )
+            }
+        }
+    }
+
 }
 
 data class ChatUiState(
     val messages: List<Message> = emptyList(),
     val messageText: String = "",
     val isTyping: Boolean = false,
+    val isStreaming: Boolean = false,
+    val streamingText: String = "",
+    val canCancelStreaming: Boolean = false,
     val validationResult: MessageValidationResult = MessageValidationResult.Valid,
     val isEnabled: Boolean = true,
     val conversationId: String = "dummy_chat_id",
     val conversationTitle: String = "Chat",
-    val error: String? = null
+    val error: String? = null,
+    val isLoadingHistory: Boolean = false
 )

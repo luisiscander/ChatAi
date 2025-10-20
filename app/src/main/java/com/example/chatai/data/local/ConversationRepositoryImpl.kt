@@ -14,25 +14,21 @@ class ConversationRepositoryImpl @Inject constructor(
     // TODO: Add Room dependencies when compilation issues are resolved
 ) : ConversationRepository {
 
-    // Temporary in-memory storage until Room is implemented
-    private val conversations = mutableMapOf<String, Conversation>()
-    private val messages = mutableMapOf<String, MutableList<Message>>()
-
-    // Temporary implementation - returns stored data
+    // Temporary implementation - returns empty data
     override fun getAllConversations(): Flow<List<Conversation>> {
-        return flowOf(conversations.values.toList())
+        return flowOf(emptyList())
     }
 
     override fun getConversationsByArchivedStatus(isArchived: Boolean): Flow<List<Conversation>> {
-        return flowOf(conversations.values.filter { it.isArchived == isArchived })
+        return flowOf(emptyList())
     }
 
     override fun getConversationById(id: String): Flow<Conversation?> {
-        return flowOf(conversations[id])
+        return flowOf(null)
     }
 
     override suspend fun createConversation(title: String, model: String): Conversation {
-        val conversation = Conversation(
+        return Conversation(
             id = UUID.randomUUID().toString(),
             title = title,
             model = model,
@@ -42,63 +38,37 @@ class ConversationRepositoryImpl @Inject constructor(
             createdAt = Date(),
             updatedAt = Date()
         )
-        // Store the conversation in memory
-        conversations[conversation.id] = conversation
-        messages[conversation.id] = mutableListOf()
-        return conversation
     }
 
     override suspend fun updateConversation(conversation: Conversation) {
-        conversations[conversation.id] = conversation
+        // TODO: Implement when Room is ready
     }
 
     override suspend fun deleteConversation(id: String) {
-        conversations.remove(id)
-        messages.remove(id)
+        // TODO: Implement when Room is ready
     }
 
     override suspend fun archiveConversation(id: String) {
-        conversations[id]?.let { conversation ->
-            conversations[id] = conversation.copy(isArchived = true)
-        }
+        // TODO: Implement when Room is ready
     }
 
     override suspend fun unarchiveConversation(id: String) {
-        conversations[id]?.let { conversation ->
-            conversations[id] = conversation.copy(isArchived = false)
-        }
+        // TODO: Implement when Room is ready
     }
 
     override fun getMessagesByConversationId(conversationId: String): Flow<List<Message>> {
-        return flowOf(messages[conversationId]?.toList() ?: emptyList())
+        return flowOf(emptyList())
     }
 
     override suspend fun addMessage(message: Message) {
-        messages.getOrPut(message.conversationId) { mutableListOf() }.add(message)
-        // Update conversation's last message and activity
-        conversations[message.conversationId]?.let { conversation ->
-            conversations[message.conversationId] = conversation.copy(
-                lastMessage = message.content,
-                lastActivity = Date(),
-                updatedAt = Date()
-            )
-        }
+        // TODO: Implement when Room is ready
     }
 
     override suspend fun deleteMessage(id: String) {
-        // Find and remove message from all conversation lists
-        messages.values.forEach { messageList ->
-            messageList.removeAll { it.id == id }
-        }
+        // TODO: Implement when Room is ready
     }
 
     override suspend fun searchConversations(query: String): Flow<List<Conversation>> {
-        val lowercaseQuery = query.lowercase()
-        return flowOf(
-            conversations.values.filter { conversation ->
-                conversation.title.lowercase().contains(lowercaseQuery) ||
-                conversation.lastMessage?.lowercase()?.contains(lowercaseQuery) == true
-            }
-        )
+        return flowOf(emptyList())
     }
 }

@@ -14,10 +14,8 @@ fun ChatAiApp(
     val onboardingStatus by viewModel.onboardingStatus.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     
-    // Initialize onboarding check directly without LaunchedEffect
-    DisposableEffect(Unit) {
+    LaunchedEffect(Unit) {
         viewModel.checkOnboardingStatus()
-        onDispose { }
     }
     
     NavigationManager(

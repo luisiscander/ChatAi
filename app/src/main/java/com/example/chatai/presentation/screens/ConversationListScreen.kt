@@ -34,7 +34,7 @@ import java.util.*
 @Composable
 fun ConversationListScreen(
     onConversationClick: (String) -> Unit,
-    onCreateConversation: (String) -> Unit,
+    onCreateConversation: () -> Unit,
     onShowArchived: () -> Unit,
     onNavigateToThemeSettings: () -> Unit = {},
     onNavigateToDefaultModelSettings: () -> Unit = {},
@@ -121,14 +121,7 @@ fun ConversationListScreen(
         },
         floatingActionButton = {
             FloatingActionButton(
-                onClick = {
-                    coroutineScope.launch {
-                        val conversationId = viewModel.createConversation()
-                        if (conversationId != null) {
-                            onCreateConversation(conversationId)
-                        }
-                    }
-                },
+                onClick = onCreateConversation,
                 containerColor = MaterialTheme.colorScheme.primary
             ) {
                 Icon(Icons.Default.Add, contentDescription = stringResource(R.string.new_conversation))
@@ -185,14 +178,7 @@ fun ConversationListScreen(
             }
             uiState.conversations.isEmpty() -> {
                 EmptyConversationsState(
-                    onCreateConversation = {
-                        coroutineScope.launch {
-                            val conversationId = viewModel.createConversation()
-                            if (conversationId != null) {
-                                onCreateConversation(conversationId)
-                            }
-                        }
-                    },
+                    onCreateConversation = onCreateConversation,
                     modifier = Modifier.padding(paddingValues)
                 )
             }

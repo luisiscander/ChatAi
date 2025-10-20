@@ -27,12 +27,18 @@ class ChatAiViewModel @Inject constructor(
 
     fun checkOnboardingStatus() {
         viewModelScope.launch {
-            _isLoading.value = true
-            // Mostrar splash screen por al menos 2 segundos
-            delay(2000)
-            val status = checkOnboardingStatusUseCase()
-            _onboardingStatus.value = status
-            _isLoading.value = false
+            try {
+                _isLoading.value = true
+                // Mostrar splash screen por al menos 2 segundos
+                delay(2000)
+                val status = checkOnboardingStatusUseCase()
+                _onboardingStatus.value = status
+                _isLoading.value = false
+            } catch (e: Exception) {
+                // Fallback to show main app if there's an error
+                _onboardingStatus.value = OnboardingStatus.ShowMainApp
+                _isLoading.value = false
+            }
         }
     }
 

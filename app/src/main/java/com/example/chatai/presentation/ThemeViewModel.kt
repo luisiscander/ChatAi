@@ -25,7 +25,12 @@ class ThemeViewModel @Inject constructor(
 
     private fun loadThemeMode() {
         viewModelScope.launch {
-            _themeMode.value = getThemeModeUseCase()
+            try {
+                _themeMode.value = getThemeModeUseCase()
+            } catch (e: Exception) {
+                // Fallback to system theme if there's an error
+                _themeMode.value = ThemeMode.SYSTEM
+            }
         }
     }
 

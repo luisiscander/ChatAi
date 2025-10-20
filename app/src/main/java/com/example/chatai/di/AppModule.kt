@@ -1,10 +1,14 @@
 package com.example.chatai.di
 
 import android.content.Context
+import com.example.chatai.data.local.AiModelRepositoryImpl
 import com.example.chatai.data.local.ConversationRepositoryImpl
 import com.example.chatai.data.local.UserPreferencesRepositoryImpl
+import com.example.chatai.domain.repository.AiModelRepository
 import com.example.chatai.domain.repository.ConversationRepository
 import com.example.chatai.domain.repository.UserPreferencesRepository
+import com.example.chatai.domain.usecase.GetAvailableModelsUseCase
+import com.example.chatai.domain.usecase.SearchConversationsUseCase
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
@@ -22,6 +26,12 @@ abstract class AppModule {
     abstract fun bindConversationRepository(
         conversationRepositoryImpl: ConversationRepositoryImpl
     ): ConversationRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindAiModelRepository(
+        aiModelRepositoryImpl: AiModelRepositoryImpl
+    ): AiModelRepository
 }
 
 @Module
@@ -34,5 +44,21 @@ object AppModuleProvider {
         @ApplicationContext context: Context
     ): UserPreferencesRepository {
         return UserPreferencesRepositoryImpl(context)
+    }
+    
+    @Provides
+    @Singleton
+    fun provideSearchConversationsUseCase(
+        conversationRepository: ConversationRepository
+    ): SearchConversationsUseCase {
+        return SearchConversationsUseCase(conversationRepository)
+    }
+    
+    @Provides
+    @Singleton
+    fun provideGetAvailableModelsUseCase(
+        aiModelRepository: AiModelRepository
+    ): GetAvailableModelsUseCase {
+        return GetAvailableModelsUseCase(aiModelRepository)
     }
 }

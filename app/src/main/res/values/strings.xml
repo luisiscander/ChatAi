@@ -90,4 +90,17 @@
     
     <!-- Test Data -->
     <string name="test_conversation_id">test</string>
+    
+    <!-- Privacy Settings -->
+    <string name="privacy_settings_title">Privacidad y Datos</string>
+    <string name="export_all_conversations_title">Exportar todas las conversaciones</string>
+    <string name="export_all_conversations_description">Genera un archivo ZIP con todas tus conversaciones</string>
+    <string name="export_all_button">Exportar Todo</string>
+    <string name="delete_all_data_title">⚠️ Eliminar Todos los Datos</string>
+    <string name="delete_all_data_warning">Esta acción eliminará permanentemente todas las conversaciones, mensajes, configuraciones y API Key. Esta acción NO se puede deshacer.</string>
+    <string name="delete_all_button">Eliminar Todos los Datos</string>
+    <string name="delete_confirmation_title">⚠️ Confirmación Requerida</string>
+    <string name="delete_confirmation_warning">Esta acción eliminará permanentemente:\n\n• Todas las conversaciones\n• Todos los mensajes\n• Configuraciones de modelos\n• API Key\n\nEsta acción NO se puede deshacer.\n\nEscribe "ELIMINAR" (en mayúsculas) para confirmar:</string>
+    <string name="delete_confirmation_label">Escribe ELIMINAR para confirmar</string>
+    <string name="confirm_delete">Confirmar Eliminación</string>
 </resources>

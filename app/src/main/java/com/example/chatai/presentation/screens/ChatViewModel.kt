@@ -307,15 +307,24 @@ class ChatViewModel @Inject constructor(
                     error = null
                 )
 
-                // Add a small delay to ensure the conversation is fully created
-                kotlinx.coroutines.delay(50)
-
-                // Load conversation title - handle case where conversation doesn't exist
-                val conversation = try {
-                    getConversationByIdUseCase(conversationId)
-                } catch (e: Exception) {
-                    println("Error loading conversation: ${e.message}")
-                    null
+                // Retry mechanism to wait for conversation to be created
+                var conversation: com.example.chatai.domain.model.Conversation? = null
+                var retries = 0
+                val maxRetries = 10
+                
+                while (conversation == null && retries < maxRetries) {
+                    conversation = try {
+                        getConversationByIdUseCase(conversationId)
+                    } catch (e: Exception) {
+                        null
+                    }
+                    
+                    if (conversation == null && retries < maxRetries - 1) {
+                        kotlinx.coroutines.delay(100) // Wait 100ms before retry
+                        retries++
+                    } else {
+                        break
+                    }
                 }
                 
                 val conversationTitle = conversation?.title ?: "Nueva conversación"
@@ -324,7 +333,6 @@ class ChatViewModel @Inject constructor(
                 val messages = try {
                     getMessagesSyncUseCase(conversationId)
                 } catch (e: Exception) {
-                    println("Error loading messages: ${e.message}")
                     emptyList()
                 }
                 
@@ -334,7 +342,6 @@ class ChatViewModel @Inject constructor(
                     conversationTitle = conversationTitle
                 )
             } catch (e: Exception) {
-                println("Error in loadConversationHistory: ${e.message}")
                 _uiState.value = _uiState.value.copy(
                     isLoadingHistory = false,
                     error = "Error al cargar conversación: ${e.message}"

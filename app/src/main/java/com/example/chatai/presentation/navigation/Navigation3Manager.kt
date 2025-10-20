@@ -13,6 +13,7 @@ import com.example.chatai.presentation.screens.OnboardingScreen
 import com.example.chatai.presentation.screens.SplashScreen
 import com.example.chatai.presentation.screens.ThemeSettingsScreen
 import com.example.chatai.presentation.screens.ConversationCreationViewModel
+import com.example.chatai.domain.usecase.GetConversationByIdUseCase
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -41,8 +42,7 @@ fun Navigation3Manager(
     // Handle conversation creation result
     LaunchedEffect(conversationCreationState.conversationId, conversationCreationState.error) {
         conversationCreationState.conversationId?.let { conversationId ->
-            // Add a small delay to ensure the conversation is fully created
-            kotlinx.coroutines.delay(100)
+            // Navigate to chat with the created conversation ID
             backStack = backStack + NavEntry("chat", conversationId)
             conversationCreationViewModel.clearState()
         }

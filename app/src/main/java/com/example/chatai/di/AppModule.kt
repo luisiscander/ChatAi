@@ -7,8 +7,7 @@ import com.example.chatai.data.local.UserPreferencesRepositoryImpl
 import com.example.chatai.domain.repository.AiModelRepository
 import com.example.chatai.domain.repository.ConversationRepository
 import com.example.chatai.domain.repository.UserPreferencesRepository
-import com.example.chatai.domain.usecase.GetAvailableModelsUseCase
-import com.example.chatai.domain.usecase.SearchConversationsUseCase
+import com.example.chatai.domain.usecase.*
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
@@ -60,5 +59,35 @@ object AppModuleProvider {
         aiModelRepository: AiModelRepository
     ): GetAvailableModelsUseCase {
         return GetAvailableModelsUseCase(aiModelRepository)
+    }
+    
+    @Provides
+    @Singleton
+    fun provideSendMessageUseCase(
+        conversationRepository: ConversationRepository
+    ): SendMessageUseCase {
+        return SendMessageUseCase(conversationRepository)
+    }
+    
+    @Provides
+    @Singleton
+    fun provideGetAiResponseUseCase(
+        conversationRepository: ConversationRepository
+    ): GetAiResponseUseCase {
+        return GetAiResponseUseCase(conversationRepository)
+    }
+    
+    @Provides
+    @Singleton
+    fun provideCheckNetworkConnectionUseCase(
+        @ApplicationContext context: Context
+    ): CheckNetworkConnectionUseCase {
+        return CheckNetworkConnectionUseCase(context)
+    }
+    
+    @Provides
+    @Singleton
+    fun provideValidateApiKeyConnectionUseCase(): ValidateApiKeyConnectionUseCase {
+        return ValidateApiKeyConnectionUseCase()
     }
 }

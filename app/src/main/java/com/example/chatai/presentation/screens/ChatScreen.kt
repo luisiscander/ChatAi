@@ -33,6 +33,8 @@ fun ChatScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val listState = rememberLazyListState()
+    var showDeleteDialog by remember { mutableStateOf(false) }
+    var messageToDelete by remember { mutableStateOf<Message?>(null) }
     
     // Auto-scroll to bottom when new messages arrive
     LaunchedEffect(uiState.messages.size) {
@@ -68,7 +70,10 @@ fun ChatScreen(
                 MessageBubble(
                     message = message,
                     onCopyMessage = viewModel::copyMessage,
-                    onDeleteMessage = viewModel::deleteMessage,
+                    onDeleteMessage = { 
+                        messageToDelete = message
+                        showDeleteDialog = true
+                    },
                     modifier = Modifier.fillMaxWidth()
                 )
             }
@@ -93,6 +98,41 @@ fun ChatScreen(
             error = uiState.error,
             modifier = Modifier.fillMaxWidth()
         )
+        
+        // Delete confirmation dialog
+        if (showDeleteDialog && messageToDelete != null) {
+            AlertDialog(
+                onDismissRequest = { 
+                    showDeleteDialog = false
+                    messageToDelete = null
+                },
+                title = { Text("Eliminar mensaje") },
+                text = { Text("¿Estás seguro de que quieres eliminar este mensaje?") },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            messageToDelete?.let { message ->
+                                viewModel.deleteMessage(message.id)
+                            }
+                            showDeleteDialog = false
+                            messageToDelete = null
+                        }
+                    ) {
+                        Text("Eliminar")
+                    }
+                },
+                dismissButton = {
+                    TextButton(
+                        onClick = {
+                            showDeleteDialog = false
+                            messageToDelete = null
+                        }
+                    ) {
+                        Text("Cancelar")
+                    }
+                }
+            )
+        }
     }
 }
 

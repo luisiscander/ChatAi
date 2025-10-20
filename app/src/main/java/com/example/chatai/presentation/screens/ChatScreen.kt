@@ -8,6 +8,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Send
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -66,6 +67,8 @@ fun ChatScreen(
             items(uiState.messages) { message ->
                 MessageBubble(
                     message = message,
+                    onCopyMessage = viewModel::copyMessage,
+                    onDeleteMessage = viewModel::deleteMessage,
                     modifier = Modifier.fillMaxWidth()
                 )
             }
@@ -96,6 +99,8 @@ fun ChatScreen(
 @Composable
 fun MessageBubble(
     message: Message,
+    onCopyMessage: (String) -> Unit = {},
+    onDeleteMessage: (String) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val isUserMessage = message.isFromUser
@@ -256,20 +261,20 @@ fun MessageInput(
             
             Spacer(modifier = Modifier.width(8.dp))
             
-            FloatingActionButton(
-                onClick = if (isEnabled && messageText.isNotBlank() && 
-                             validationResult is com.example.chatai.domain.usecase.MessageValidationResult.Valid) {
-                    onSendMessage
-                } else {
-                    {}
-                },
-                modifier = Modifier.size(48.dp)
-            ) {
-                Icon(
-                    Icons.Default.Send,
-                    contentDescription = "Enviar mensaje"
-                )
-            }
+                   FloatingActionButton(
+                       onClick = if (isEnabled && messageText.isNotBlank() &&
+                                    validationResult is com.example.chatai.domain.usecase.MessageValidationResult.Valid) {
+                           onSendMessage
+                       } else {
+                           {}
+                       },
+                       modifier = Modifier.size(48.dp)
+                   ) {
+                       Icon(
+                           Icons.Default.Send,
+                           contentDescription = "Enviar mensaje"
+                       )
+                   }
         }
     }
 }

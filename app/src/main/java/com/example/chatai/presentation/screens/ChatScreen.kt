@@ -237,7 +237,12 @@ fun MessageInput(
             Spacer(modifier = Modifier.width(8.dp))
             
             FloatingActionButton(
-                onClick = onSendMessage,
+                onClick = if (isEnabled && messageText.isNotBlank() && 
+                             validationResult is com.example.chatai.domain.usecase.MessageValidationResult.Valid) {
+                    onSendMessage
+                } else {
+                    {}
+                },
                 modifier = Modifier.size(48.dp)
             ) {
                 Icon(

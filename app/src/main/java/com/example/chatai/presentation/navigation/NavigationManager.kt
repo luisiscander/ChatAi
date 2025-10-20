@@ -16,7 +16,6 @@ import com.example.chatai.presentation.screens.MainScreen
 import com.example.chatai.presentation.screens.OnboardingScreen
 import com.example.chatai.presentation.screens.SplashScreen
 import com.example.chatai.presentation.screens.ThemeSettingsScreen
-import androidx.hilt.navigation.compose.hiltViewModel
 
 // Navigation routes
 object Routes {
@@ -88,9 +87,9 @@ fun NavigationManager(
                     navController.navigate(Routes.CHAT.replace("{conversationId}", conversationId))
                 },
                 onCreateConversation = {
-                    // Create a simple conversation ID and navigate directly
-                    val conversationId = "conversation_${System.currentTimeMillis()}"
-                    navController.navigate(Routes.CHAT.replace("{conversationId}", conversationId))
+                    // Create a new conversation and navigate to chat
+                    val newConversationId = "new_conversation_${System.currentTimeMillis()}"
+                    navController.navigate(Routes.CHAT.replace("{conversationId}", newConversationId))
                 },
                 onShowArchived = {
                     navController.navigate(Routes.ARCHIVED_CONVERSATIONS)
@@ -125,9 +124,8 @@ fun NavigationManager(
                     navController.navigate(Routes.CHAT.replace("{conversationId}", conversationId))
                 },
                 onCreateConversation = {
-                    // Create a simple conversation ID and navigate directly
-                    val conversationId = "conversation_${System.currentTimeMillis()}"
-                    navController.navigate(Routes.CHAT.replace("{conversationId}", conversationId))
+                    val newConversationId = "new_conversation_${System.currentTimeMillis()}"
+                    navController.navigate(Routes.CHAT.replace("{conversationId}", newConversationId))
                 },
                 onShowArchived = {
                     navController.popBackStack()

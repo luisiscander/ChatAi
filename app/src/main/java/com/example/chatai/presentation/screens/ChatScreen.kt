@@ -38,44 +38,24 @@ fun ChatScreen(
     modifier: Modifier = Modifier,
     viewModel: ChatViewModel = hiltViewModel()
 ) {
-    android.util.Log.d("ChatScreen", "ChatScreen composing with conversationId: $conversationId")
-    
     val uiState by viewModel.uiState.collectAsState()
-    android.util.Log.d("ChatScreen", "uiState collected: $uiState")
-    
     val context = LocalContext.current
     val listState = rememberLazyListState()
     var showDeleteDialog by remember { mutableStateOf(false) }
     var messageToDelete by remember { mutableStateOf<Message?>(null) }
     
-    android.util.Log.d("ChatScreen", "Setting up LaunchedEffect for conversationId: $conversationId")
-    
     // Load conversation history when screen opens
     LaunchedEffect(conversationId) {
-        android.util.Log.d("ChatScreen", "LaunchedEffect executing for conversationId: $conversationId")
         if (conversationId.isNotEmpty()) {
-            try {
-                android.util.Log.d("ChatScreen", "Calling loadConversationHistory")
-                viewModel.loadConversationHistory(conversationId)
-                android.util.Log.d("ChatScreen", "loadConversationHistory completed")
-            } catch (e: Exception) {
-                // Handle any errors gracefully
-                android.util.Log.e("ChatScreen", "Error loading conversation history", e)
-            }
-        } else {
-            android.util.Log.w("ChatScreen", "conversationId is empty, skipping load")
+            viewModel.loadConversationHistory(conversationId)
         }
     }
     
     // Auto-scroll to bottom when new messages arrive
     LaunchedEffect(uiState.messages.size) {
-        if (uiState.messages.isNotEmpty() && uiState.isAutoScrollEnabled && !uiState.isLoadingHistory) {
-            try {
-                listState.animateScrollToItem(uiState.messages.size - 1)
-            } catch (e: Exception) {
-                // Handle scroll errors gracefully
-            }
-        } else if (uiState.messages.isNotEmpty() && !uiState.isAutoScrollEnabled && !uiState.isLoadingHistory) {
+        if (uiState.messages.isNotEmpty() && uiState.isAutoScrollEnabled) {
+            listState.animateScrollToItem(uiState.messages.size - 1)
+        } else if (uiState.messages.isNotEmpty() && !uiState.isAutoScrollEnabled) {
             // Show notification for new message when not auto-scrolling
             viewModel.onNewMessageReceived()
         }
@@ -83,14 +63,14 @@ fun ChatScreen(
     
     // Detect manual scroll
     LaunchedEffect(listState.firstVisibleItemIndex) {
-        if (listState.firstVisibleItemIndex > 0 && uiState.isAutoScrollEnabled && !uiState.isLoadingHistory) {
+        if (listState.firstVisibleItemIndex > 0 && uiState.isAutoScrollEnabled) {
             viewModel.onManualScroll()
         }
     }
     
     // Load more messages when reaching the top
     LaunchedEffect(listState.firstVisibleItemIndex) {
-        if (listState.firstVisibleItemIndex <= 2 && uiState.hasMoreMessages && !uiState.isLoadingMoreMessages && !uiState.isLoadingHistory) {
+        if (listState.firstVisibleItemIndex <= 2 && uiState.hasMoreMessages && !uiState.isLoadingMoreMessages) {
             viewModel.loadMoreMessages()
         }
     }

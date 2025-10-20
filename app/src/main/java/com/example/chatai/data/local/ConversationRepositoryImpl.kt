@@ -41,6 +41,11 @@ class ConversationRepositoryImpl @Inject constructor(
             }
         }
     }
+    
+    // Synchronous method to get conversation by ID immediately
+    fun getConversationByIdSync(id: String): Conversation? {
+        return _conversations.value.find { it.id == id }
+    }
 
     override suspend fun createConversation(title: String, model: String): Conversation {
         val newConversation = Conversation(

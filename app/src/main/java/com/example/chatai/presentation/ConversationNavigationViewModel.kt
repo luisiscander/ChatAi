@@ -22,20 +22,29 @@ class ConversationNavigationViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isCreating = true, error = null)
             
-            when (val result = createConversationUseCase()) {
-                is com.example.chatai.domain.usecase.CreateConversationResult.Success -> {
-                    _uiState.value = _uiState.value.copy(
-                        isCreating = false,
-                        lastCreatedConversationId = result.conversation.id
-                    )
-                    onSuccess(result.conversation.id)
+            try {
+                when (val result = createConversationUseCase()) {
+                    is com.example.chatai.domain.usecase.CreateConversationResult.Success -> {
+                        _uiState.value = _uiState.value.copy(
+                            isCreating = false,
+                            lastCreatedConversationId = result.conversation.id
+                        )
+                        // Add a small delay to ensure the conversation is properly stored
+                        kotlinx.coroutines.delay(100)
+                        onSuccess(result.conversation.id)
+                    }
+                    is com.example.chatai.domain.usecase.CreateConversationResult.Error -> {
+                        _uiState.value = _uiState.value.copy(
+                            isCreating = false,
+                            error = result.message
+                        )
+                    }
                 }
-                is com.example.chatai.domain.usecase.CreateConversationResult.Error -> {
-                    _uiState.value = _uiState.value.copy(
-                        isCreating = false,
-                        error = result.message
-                    )
-                }
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(
+                    isCreating = false,
+                    error = "Error al crear conversación: ${e.message}"
+                )
             }
         }
     }

@@ -29,7 +29,7 @@ class ChatViewModel @Inject constructor(
     private val checkNetworkConnectionUseCase: CheckNetworkConnectionUseCase,
     private val validateApiKeyConnectionUseCase: ValidateApiKeyConnectionUseCase,
     private val userPreferencesRepository: UserPreferencesRepository,
-    private val conversationRepository: ConversationRepository
+    private val getConversationByIdUseCase: GetConversationByIdUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ChatUiState())
@@ -303,7 +303,7 @@ class ChatViewModel @Inject constructor(
             )
 
             // Load conversation title
-            val conversation = conversationRepository.getConversationById(conversationId).first()
+            val conversation = getConversationByIdUseCase(conversationId)
             val conversationTitle = conversation?.title ?: "Chat"
 
             // Load messages

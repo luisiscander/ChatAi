@@ -90,4 +90,24 @@ object AppModuleProvider {
     fun provideValidateApiKeyConnectionUseCase(): ValidateApiKeyConnectionUseCase {
         return ValidateApiKeyConnectionUseCase()
     }
+    
+    @Provides
+    @Singleton
+    fun provideStreamAiResponseUseCase(): StreamAiResponseUseCase {
+        return StreamAiResponseUseCase()
+    }
+    
+    @Provides
+    @Singleton
+    fun provideCancelStreamingUseCase(): CancelStreamingUseCase {
+        return CancelStreamingUseCase()
+    }
+    
+    @Provides
+    @Singleton
+    fun provideGetMessagesUseCase(
+        conversationRepository: ConversationRepository
+    ): GetMessagesUseCase {
+        return GetMessagesUseCase(conversationRepository)
+    }
 }

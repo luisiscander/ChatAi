@@ -86,6 +86,16 @@ fun ChatScreen(
                     )
                 }
             }
+            
+            // Streaming message
+            if (uiState.isStreaming && uiState.streamingText.isNotEmpty()) {
+                item {
+                    StreamingMessage(
+                        text = uiState.streamingText,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            }
         }
         
         // Message Input
@@ -96,6 +106,9 @@ fun ChatScreen(
             validationResult = uiState.validationResult,
             isEnabled = uiState.isEnabled,
             error = uiState.error,
+            isStreaming = uiState.isStreaming,
+            canCancelStreaming = uiState.canCancelStreaming,
+            onCancelStreaming = viewModel::cancelStreaming,
             modifier = Modifier.fillMaxWidth()
         )
         
@@ -229,6 +242,36 @@ fun TypingIndicator(
 }
 
 @Composable
+fun StreamingMessage(
+    text: String,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier,
+        horizontalArrangement = Arrangement.Start
+    ) {
+        Card(
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant
+            ),
+            shape = RoundedCornerShape(
+                topStart = 4.dp,
+                topEnd = 16.dp,
+                bottomStart = 16.dp,
+                bottomEnd = 16.dp
+            )
+        ) {
+            Text(
+                text = text + "▊", // Cursor parpadeante
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(12.dp)
+            )
+        }
+    }
+}
+
+@Composable
 fun MessageInput(
     messageText: String,
     onMessageTextChanged: (String) -> Unit,
@@ -236,6 +279,9 @@ fun MessageInput(
     validationResult: com.example.chatai.domain.usecase.MessageValidationResult,
     isEnabled: Boolean,
     error: String? = null,
+    isStreaming: Boolean = false,
+    canCancelStreaming: Boolean = false,
+    onCancelStreaming: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -302,12 +348,13 @@ fun MessageInput(
             Spacer(modifier = Modifier.width(8.dp))
             
                    FloatingActionButton(
-                       onClick = onSendMessage,
-                       modifier = Modifier.size(48.dp)
+                       onClick = if (isStreaming && canCancelStreaming) onCancelStreaming else onSendMessage,
+                       modifier = Modifier.size(48.dp),
+                       containerColor = if (isStreaming) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
                    ) {
                        Icon(
-                           Icons.Default.Send,
-                           contentDescription = "Enviar mensaje"
+                           if (isStreaming) Icons.Default.Close else Icons.Default.Send,
+                           contentDescription = if (isStreaming) "Detener streaming" else "Enviar mensaje"
                        )
                    }
         }

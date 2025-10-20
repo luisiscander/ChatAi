@@ -73,6 +73,14 @@ object AppModuleProvider {
     
     @Provides
     @Singleton
+    fun provideGetMessagesSyncUseCase(
+        conversationRepository: ConversationRepository
+    ): GetMessagesSyncUseCase {
+        return GetMessagesSyncUseCase(conversationRepository)
+    }
+    
+    @Provides
+    @Singleton
     fun provideGetAvailableModelsUseCase(
         aiModelRepository: AiModelRepository
     ): GetAvailableModelsUseCase {

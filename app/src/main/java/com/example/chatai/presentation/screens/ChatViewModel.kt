@@ -29,7 +29,8 @@ class ChatViewModel @Inject constructor(
     private val checkNetworkConnectionUseCase: CheckNetworkConnectionUseCase,
     private val validateApiKeyConnectionUseCase: ValidateApiKeyConnectionUseCase,
     private val userPreferencesRepository: UserPreferencesRepository,
-    private val getConversationByIdUseCase: GetConversationByIdUseCase
+    private val getConversationByIdUseCase: GetConversationByIdUseCase,
+    private val getMessagesSyncUseCase: GetMessagesSyncUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ChatUiState())
@@ -297,21 +298,28 @@ class ChatViewModel @Inject constructor(
     // Issue #64: Cargar historial completo
     fun loadConversationHistory(conversationId: String) {
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(
-                isLoadingHistory = true,
-                conversationId = conversationId
-            )
+            try {
+                _uiState.value = _uiState.value.copy(
+                    isLoadingHistory = true,
+                    conversationId = conversationId
+                )
 
-            // Load conversation title
-            val conversation = getConversationByIdUseCase(conversationId)
-            val conversationTitle = conversation?.title ?: "Chat"
+                // Load conversation title
+                val conversation = getConversationByIdUseCase(conversationId)
+                val conversationTitle = conversation?.title ?: "Chat"
 
-            // Load messages
-            getMessagesUseCase(conversationId).collect { messages ->
+                // Load messages - use sync method to avoid infinite waiting
+                val messages = getMessagesSyncUseCase(conversationId)
+                
                 _uiState.value = _uiState.value.copy(
                     messages = messages,
                     isLoadingHistory = false,
                     conversationTitle = conversationTitle
+                )
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(
+                    isLoadingHistory = false,
+                    error = "Error al cargar conversación: ${e.message}"
                 )
             }
         }

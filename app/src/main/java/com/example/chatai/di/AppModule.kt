@@ -177,11 +177,21 @@ object AppModuleProvider {
                return ExportConversationUseCase(conversationRepository)
            }
            
-           @Provides
-           @Singleton
-           fun provideShareFileUseCase(
-               @ApplicationContext context: Context
-           ): ShareFileUseCase {
-               return ShareFileUseCase(context)
-           }
+        @Provides
+        @Singleton
+        fun provideShareFileUseCase(
+            @ApplicationContext context: Context
+        ): ShareFileUseCase {
+            return ShareFileUseCase(context)
+        }
+
+        @Provides
+        @Singleton
+        fun provideCreateConversationUseCase(
+            conversationRepository: ConversationRepository,
+            userPreferencesRepository: UserPreferencesRepository,
+            @ApplicationContext context: Context
+        ): CreateConversationUseCase {
+            return CreateConversationUseCase(conversationRepository, userPreferencesRepository, context)
+        }
 }

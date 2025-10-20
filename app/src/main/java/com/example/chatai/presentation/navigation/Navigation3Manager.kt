@@ -12,6 +12,7 @@ import com.example.chatai.presentation.screens.ExportConversationScreen
 import com.example.chatai.presentation.screens.OnboardingScreen
 import com.example.chatai.presentation.screens.SplashScreen
 import com.example.chatai.presentation.screens.ThemeSettingsScreen
+import com.example.chatai.presentation.screens.ConversationCreationViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -31,6 +32,18 @@ fun Navigation3Manager(
     modifier: Modifier = Modifier
 ) {
     var backStack by remember { mutableStateOf<List<NavEntry>>(emptyList()) }
+    
+    // Conversation creation ViewModel
+    val conversationCreationViewModel = hiltViewModel<ConversationCreationViewModel>()
+    val conversationCreationState by conversationCreationViewModel.uiState.collectAsState()
+    
+    // Handle conversation creation result
+    LaunchedEffect(conversationCreationState.conversationId) {
+        conversationCreationState.conversationId?.let { conversationId ->
+            backStack = backStack + NavEntry("chat", conversationId)
+            conversationCreationViewModel.clearState()
+        }
+    }
     
     // Determine initial route
     LaunchedEffect(onboardingStatus, isLoading) {
@@ -90,8 +103,7 @@ fun Navigation3Manager(
                     backStack = backStack + NavEntry("chat", conversationId)
                 },
                 onCreateConversation = {
-                    val conversationId = "conversation_${System.currentTimeMillis()}"
-                    backStack = backStack + NavEntry("chat", conversationId)
+                    conversationCreationViewModel.createConversation()
                 },
                 onShowArchived = {
                     backStack = backStack + NavEntry("archived_conversations")
@@ -124,8 +136,7 @@ fun Navigation3Manager(
                     backStack = backStack + NavEntry("chat", conversationId)
                 },
                 onCreateConversation = {
-                    val conversationId = "conversation_${System.currentTimeMillis()}"
-                    backStack = backStack + NavEntry("chat", conversationId)
+                    conversationCreationViewModel.createConversation()
                 },
                 onShowArchived = {
                     backStack = backStack.dropLast(1)

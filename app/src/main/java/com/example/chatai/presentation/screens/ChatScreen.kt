@@ -1,5 +1,6 @@
 package com.example.chatai.presentation.screens
 
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -19,6 +20,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.chatai.domain.model.Message
+import com.example.chatai.domain.usecase.MessageValidationResult
 import com.example.chatai.ui.theme.ChatAiTheme
 import java.text.SimpleDateFormat
 import java.util.*
@@ -38,79 +40,148 @@ fun ChatScreen(
     
     // Auto-scroll to bottom when new messages arrive
     LaunchedEffect(uiState.messages.size) {
-        if (uiState.messages.isNotEmpty()) {
+        if (uiState.messages.isNotEmpty() && uiState.isAutoScrollEnabled) {
             listState.animateScrollToItem(uiState.messages.size - 1)
+        } else if (uiState.messages.isNotEmpty() && !uiState.isAutoScrollEnabled) {
+            // Show notification for new message when not auto-scrolling
+            viewModel.onNewMessageReceived()
         }
     }
     
-    Column(
-        modifier = modifier.fillMaxSize()
-    ) {
-        // Top App Bar
-        TopAppBar(
-            title = { Text("Chat") },
-            navigationIcon = {
-                IconButton(onClick = onBackClicked) {
-                    Icon(Icons.Default.ArrowBack, contentDescription = "Volver")
+    // Detect manual scroll
+    LaunchedEffect(listState.firstVisibleItemIndex) {
+        if (listState.firstVisibleItemIndex > 0 && uiState.isAutoScrollEnabled) {
+            viewModel.onManualScroll()
+        }
+    }
+    
+    // Load more messages when reaching the top
+    LaunchedEffect(listState.firstVisibleItemIndex) {
+        if (listState.firstVisibleItemIndex <= 2 && uiState.hasMoreMessages && !uiState.isLoadingMoreMessages) {
+            viewModel.loadMoreMessages()
+        }
+    }
+    
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text(uiState.conversationTitle) },
+                navigationIcon = {
+                    IconButton(onClick = onBackClicked) {
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Volver")
+                    }
                 }
-            }
-        )
-        
-        // Messages List
-        LazyColumn(
-            state = listState,
-            modifier = Modifier
-                .weight(1f)
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-            contentPadding = PaddingValues(vertical = 16.dp)
+            )
+        }
+    ) { paddingValues ->
+        Column(
+            modifier = modifier.fillMaxSize()
         ) {
-            items(uiState.messages) { message ->
-                MessageBubble(
-                    message = message,
-                    onCopyMessage = viewModel::copyMessage,
-                    onDeleteMessage = { 
-                        messageToDelete = message
-                        showDeleteDialog = true
-                    },
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
-            
-            // Typing indicator
-            if (uiState.isTyping) {
-                item {
-                    TypingIndicator(
-                        modifier = Modifier.fillMaxWidth()
-                    )
+            // Messages List
+            Box(
+                modifier = Modifier.weight(1f)
+            ) {
+                LazyColumn(
+                    state = listState,
+                    modifier = Modifier.fillMaxSize()
+                        .padding(horizontal = 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    contentPadding = PaddingValues(vertical = 16.dp)
+                ) {
+                    // Loading indicator for more messages
+                    if (uiState.isLoadingMoreMessages) {
+                        item {
+                            Box(
+                                modifier = Modifier.fillMaxWidth(),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.padding(16.dp),
+                                    strokeWidth = 2.dp
+                                )
+                            }
+                        }
+                    }
+                    
+                    items(uiState.messages) { message ->
+                        MessageBubble(
+                            message = message,
+                            onCopyMessage = viewModel::copyMessage,
+                            onDeleteMessage = { 
+                                messageToDelete = message
+                                showDeleteDialog = true
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                    
+                    // Typing indicator
+                    if (uiState.isTyping) {
+                        item {
+                            TypingIndicator(
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
+                    }
+                    
+                    // Streaming message
+                    if (uiState.isStreaming && uiState.streamingText.isNotEmpty()) {
+                        item {
+                            StreamingMessage(
+                                text = uiState.streamingText,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
+                    }
+                }
+                
+                // New message notification
+                if (uiState.showNewMessageNotification) {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.BottomCenter
+                    ) {
+                        Card(
+                            modifier = Modifier.padding(16.dp),
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.primary
+                            )
+                        ) {
+                            TextButton(
+                                onClick = { viewModel.scrollToLatestMessage() }
+                            ) {
+                                Text(
+                                    text = "Nuevo mensaje ↓",
+                                    color = MaterialTheme.colorScheme.onPrimary
+                                )
+                            }
+                        }
+                    }
                 }
             }
             
-            // Streaming message
-            if (uiState.isStreaming && uiState.streamingText.isNotEmpty()) {
-                item {
-                    StreamingMessage(
-                        text = uiState.streamingText,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                }
-            }
+            // Message Input
+            MessageInput(
+                messageText = uiState.messageText,
+                onMessageTextChanged = viewModel::onMessageTextChanged,
+                onSendMessage = viewModel::sendMessage,
+                validationResult = uiState.validationResult,
+                isEnabled = uiState.isEnabled,
+                error = uiState.error,
+                isStreaming = uiState.isStreaming,
+                canCancelStreaming = uiState.canCancelStreaming,
+                onCancelStreaming = viewModel::cancelStreaming,
+                modifier = Modifier.fillMaxWidth()
+            )
         }
         
-        // Message Input
-        MessageInput(
-            messageText = uiState.messageText,
-            onMessageTextChanged = viewModel::onMessageTextChanged,
-            onSendMessage = viewModel::sendMessage,
-            validationResult = uiState.validationResult,
-            isEnabled = uiState.isEnabled,
-            error = uiState.error,
-            isStreaming = uiState.isStreaming,
-            canCancelStreaming = uiState.canCancelStreaming,
-            onCancelStreaming = viewModel::cancelStreaming,
-            modifier = Modifier.fillMaxWidth()
-        )
+        // Copy success message
+        uiState.copySuccessMessage?.let { successMessage ->
+            LaunchedEffect(successMessage) {
+                // Show toast-like message
+                kotlinx.coroutines.delay(2000)
+            }
+        }
         
         // Delete confirmation dialog
         if (showDeleteDialog && messageToDelete != null) {
@@ -159,52 +230,73 @@ fun MessageBubble(
     val isUserMessage = message.isFromUser
     val dateFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
     
+    var showContextMenu by remember { mutableStateOf(false) }
+
     Row(
         modifier = modifier,
-        horizontalArrangement = if (isUserMessage) {
-            Arrangement.End
-        } else {
-            Arrangement.Start
-        }
+        horizontalArrangement = if (isUserMessage) Arrangement.End else Arrangement.Start
     ) {
         Card(
-            modifier = Modifier.widthIn(max = 280.dp),
+            shape = if (isUserMessage) {
+                RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp, bottomStart = 16.dp, bottomEnd = 4.dp)
+            } else {
+                RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp, bottomStart = 4.dp, bottomEnd = 16.dp)
+            },
             colors = CardDefaults.cardColors(
-                containerColor = if (isUserMessage) {
-                    MaterialTheme.colorScheme.primary
-                } else {
-                    MaterialTheme.colorScheme.surfaceVariant
-                }
+                containerColor = if (isUserMessage) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant
             ),
-            shape = RoundedCornerShape(
-                topStart = 16.dp,
-                topEnd = 16.dp,
-                bottomStart = if (isUserMessage) 16.dp else 4.dp,
-                bottomEnd = if (isUserMessage) 4.dp else 16.dp
-            )
+            modifier = Modifier
+                .widthIn(max = 300.dp)
+                .weight(1f, fill = false)
+                .combinedClickable(
+                    onClick = { /* No-op for now */ },
+                    onLongClick = { showContextMenu = true }
+                )
         ) {
-            Column(
-                modifier = Modifier.padding(12.dp)
-            ) {
+            Column(modifier = Modifier.padding(12.dp)) {
                 Text(
                     text = message.content,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = if (isUserMessage) {
-                        MaterialTheme.colorScheme.onPrimary
-                    } else {
-                        MaterialTheme.colorScheme.onSurfaceVariant
-                    }
+                    color = if (isUserMessage) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.bodyLarge
                 )
-                
                 Spacer(modifier = Modifier.height(4.dp))
-                
                 Text(
                     text = dateFormat.format(message.timestamp),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = if (isUserMessage) {
-                        MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f)
-                    } else {
-                        MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+                    modifier = Modifier.align(Alignment.End)
+                )
+            }
+        }
+        
+        DropdownMenu(
+            expanded = showContextMenu,
+            onDismissRequest = { showContextMenu = false }
+        ) {
+            DropdownMenuItem(
+                text = { Text("Copiar") },
+                onClick = {
+                    onCopyMessage(message.content)
+                    showContextMenu = false
+                }
+            )
+            // Issue #69: Eliminar mensaje propio
+            if (isUserMessage) {
+                DropdownMenuItem(
+                    text = { Text("Eliminar") },
+                    onClick = {
+                        onDeleteMessage(message.id)
+                        showContextMenu = false
+                    }
+                )
+            }
+            // Issue #70: Eliminar mensaje del asistente
+            if (!isUserMessage) {
+                DropdownMenuItem(
+                    text = { Text("Eliminar") },
+                    onClick = {
+                        onDeleteMessage(message.id)
+                        showContextMenu = false
                     }
                 )
             }
@@ -213,9 +305,7 @@ fun MessageBubble(
 }
 
 @Composable
-fun TypingIndicator(
-    modifier: Modifier = Modifier
-) {
+fun TypingIndicator(modifier: Modifier = Modifier) {
     Row(
         modifier = modifier,
         horizontalArrangement = Arrangement.Start
@@ -276,7 +366,7 @@ fun MessageInput(
     messageText: String,
     onMessageTextChanged: (String) -> Unit,
     onSendMessage: () -> Unit,
-    validationResult: com.example.chatai.domain.usecase.MessageValidationResult,
+    validationResult: MessageValidationResult,
     isEnabled: Boolean,
     error: String? = null,
     isStreaming: Boolean = false,
@@ -307,30 +397,18 @@ fun MessageInput(
         
         // Validation message
         when (validationResult) {
-            is com.example.chatai.domain.usecase.MessageValidationResult.TooLong -> {
+            is MessageValidationResult.TooLong -> {
                 Text(
                     text = "El mensaje es muy largo (máximo 10,000 caracteres)",
                     color = MaterialTheme.colorScheme.error,
                     style = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    textAlign = TextAlign.End
                 )
-                Spacer(modifier = Modifier.height(8.dp))
             }
-            else -> {}
+            else -> { /* No validation message for Valid or Empty */ }
         }
-        
-        // Character count
-        Text(
-            text = "${messageText.length}/10,000",
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.End,
-            modifier = Modifier.fillMaxWidth()
-        )
-        
-        Spacer(modifier = Modifier.height(8.dp))
-        
-        // Input field and send button
+
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.Bottom
@@ -342,21 +420,31 @@ fun MessageInput(
                 modifier = Modifier.weight(1f),
                 enabled = isEnabled,
                 maxLines = 4,
-                isError = validationResult is com.example.chatai.domain.usecase.MessageValidationResult.TooLong
+                isError = validationResult is MessageValidationResult.TooLong
             )
             
             Spacer(modifier = Modifier.width(8.dp))
             
-                   FloatingActionButton(
-                       onClick = if (isStreaming && canCancelStreaming) onCancelStreaming else onSendMessage,
-                       modifier = Modifier.size(48.dp),
-                       containerColor = if (isStreaming) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
-                   ) {
-                       Icon(
-                           if (isStreaming) Icons.Default.Close else Icons.Default.Send,
-                           contentDescription = if (isStreaming) "Detener streaming" else "Enviar mensaje"
-                       )
-                   }
+            FloatingActionButton(
+                onClick = if (isStreaming && canCancelStreaming) onCancelStreaming else onSendMessage,
+                modifier = Modifier.size(48.dp),
+                containerColor = if (isStreaming) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
+            ) {
+                Icon(
+                    if (isStreaming) Icons.Default.Close else Icons.Default.Send,
+                    contentDescription = if (isStreaming) "Detener streaming" else "Enviar mensaje"
+                )
+            }
+        }
+        
+        if (messageText.isNotBlank() && validationResult !is MessageValidationResult.TooLong) {
+            Text(
+                text = "${messageText.length}/10,000",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.fillMaxWidth(),
+                textAlign = TextAlign.End
+            )
         }
     }
 }

@@ -25,6 +25,7 @@ class ChatViewModel @Inject constructor(
     private val streamAiResponseUseCase: StreamAiResponseUseCase,
     private val cancelStreamingUseCase: CancelStreamingUseCase,
     private val getMessagesUseCase: GetMessagesUseCase,
+    private val getMessagesWithPaginationUseCase: GetMessagesWithPaginationUseCase,
     private val checkNetworkConnectionUseCase: CheckNetworkConnectionUseCase,
     private val validateApiKeyConnectionUseCase: ValidateApiKeyConnectionUseCase,
     private val userPreferencesRepository: UserPreferencesRepository
@@ -209,17 +210,27 @@ class ChatViewModel @Inject constructor(
         }
     }
 
+    // Issue #68: Copiar mensaje
     fun copyMessage(messageText: String) {
         val result = copyMessageUseCase(messageText)
         when (result) {
             is CopyMessageResult.Success -> {
                 _uiState.value = _uiState.value.copy(
-                    error = null
+                    error = null,
+                    copySuccessMessage = "Texto copiado"
                 )
+                // Clear success message after 2 seconds
+                viewModelScope.launch {
+                    kotlinx.coroutines.delay(2000)
+                    _uiState.value = _uiState.value.copy(
+                        copySuccessMessage = null
+                    )
+                }
             }
             is CopyMessageResult.Error -> {
                 _uiState.value = _uiState.value.copy(
-                    error = result.message
+                    error = result.message,
+                    copySuccessMessage = null
                 )
             }
         }
@@ -299,6 +310,68 @@ class ChatViewModel @Inject constructor(
         }
     }
 
+    // Issue #66: Scroll manual en historial
+    fun onManualScroll() {
+        _uiState.value = _uiState.value.copy(
+            isAutoScrollEnabled = false
+        )
+    }
+
+    // Issue #66: Notificación de nuevo mensaje
+    fun onNewMessageReceived() {
+        if (!_uiState.value.isAutoScrollEnabled) {
+            _uiState.value = _uiState.value.copy(
+                showNewMessageNotification = true
+            )
+        }
+    }
+
+    // Issue #66: Volver al último mensaje
+    fun scrollToLatestMessage() {
+        _uiState.value = _uiState.value.copy(
+            isAutoScrollEnabled = true,
+            showNewMessageNotification = false
+        )
+    }
+
+    // Issue #67: Cargar mensajes antiguos (paginación)
+    fun loadMoreMessages() {
+        if (_uiState.value.isLoadingMoreMessages || !_uiState.value.hasMoreMessages) {
+            return
+        }
+
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(
+                isLoadingMoreMessages = true
+            )
+
+            val result = getMessagesWithPaginationUseCase(
+                conversationId = _uiState.value.conversationId,
+                offset = _uiState.value.messages.size,
+                limit = 20
+            )
+
+            when (result) {
+                is GetMessagesWithPaginationResult.Success -> {
+                    val currentMessages = _uiState.value.messages.toMutableList()
+                    currentMessages.addAll(0, result.messages) // Add at beginning
+
+                    _uiState.value = _uiState.value.copy(
+                        messages = currentMessages,
+                        isLoadingMoreMessages = false,
+                        hasMoreMessages = result.messages.size >= 20
+                    )
+                }
+                is GetMessagesWithPaginationResult.Error -> {
+                    _uiState.value = _uiState.value.copy(
+                        isLoadingMoreMessages = false,
+                        error = result.message
+                    )
+                }
+            }
+        }
+    }
+
 }
 
 data class ChatUiState(
@@ -313,5 +386,10 @@ data class ChatUiState(
     val conversationId: String = "dummy_chat_id",
     val conversationTitle: String = "Chat",
     val error: String? = null,
-    val isLoadingHistory: Boolean = false
+    val isLoadingHistory: Boolean = false,
+    val isLoadingMoreMessages: Boolean = false,
+    val hasMoreMessages: Boolean = true,
+    val isAutoScrollEnabled: Boolean = true,
+    val showNewMessageNotification: Boolean = false,
+    val copySuccessMessage: String? = null
 )

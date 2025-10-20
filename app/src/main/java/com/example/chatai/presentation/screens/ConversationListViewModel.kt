@@ -5,6 +5,8 @@ import androidx.lifecycle.viewModelScope
 import com.example.chatai.domain.model.Conversation
 import com.example.chatai.domain.usecase.ArchiveConversationUseCase
 import com.example.chatai.domain.usecase.GetConversationsUseCase
+import com.example.chatai.domain.usecase.SearchConversationsUseCase
+import com.example.chatai.domain.usecase.SearchResult
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -16,7 +18,8 @@ import javax.inject.Inject
 @HiltViewModel
 class ConversationListViewModel @Inject constructor(
     private val getConversationsUseCase: GetConversationsUseCase,
-    private val archiveConversationUseCase: ArchiveConversationUseCase
+    private val archiveConversationUseCase: ArchiveConversationUseCase,
+    private val searchConversationsUseCase: SearchConversationsUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ConversationListUiState())
@@ -62,10 +65,40 @@ class ConversationListViewModel @Inject constructor(
     fun clearError() {
         _uiState.value = _uiState.value.copy(error = null)
     }
+
+    fun searchConversations(query: String) {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(searchQuery = query)
+            
+            searchConversationsUseCase(query)
+                .catch { exception ->
+                    _uiState.value = _uiState.value.copy(
+                        error = exception.message,
+                        searchResult = null
+                    )
+                }
+                .collect { searchResult ->
+                    _uiState.value = _uiState.value.copy(
+                        searchResult = searchResult,
+                        error = null
+                    )
+                }
+        }
+    }
+
+    fun clearSearch() {
+        _uiState.value = _uiState.value.copy(
+            searchQuery = "",
+            searchResult = null
+        )
+        loadConversations()
+    }
 }
 
 data class ConversationListUiState(
     val conversations: List<Conversation> = emptyList(),
     val isLoading: Boolean = false,
-    val error: String? = null
+    val error: String? = null,
+    val searchQuery: String = "",
+    val searchResult: SearchResult? = null
 )

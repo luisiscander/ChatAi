@@ -103,4 +103,26 @@
     <string name="delete_confirmation_warning">Esta acción eliminará permanentemente:\n\n• Todas las conversaciones\n• Todos los mensajes\n• Configuraciones de modelos\n• API Key\n\nEsta acción NO se puede deshacer.\n\nEscribe "ELIMINAR" (en mayúsculas) para confirmar:</string>
     <string name="delete_confirmation_label">Escribe ELIMINAR para confirmar</string>
     <string name="confirm_delete">Confirmar Eliminación</string>
+    
+    <!-- Model Comparison -->
+    <string name="comparison_mode">Modo Comparación</string>
+    <string name="selected_models_count">Modelos seleccionados: %1$d/%2$d</string>
+    <string name="estimated_cost_format">Costo estimado: %1$s</string>
+    <string name="add_model">Agregar modelo</string>
+    <string name="remove">Quitar</string>
+    <string name="select_models">Seleccionar modelos</string>
+    <string name="selected">Seleccionado</string>
+    <string name="select">Seleccionar</string>
+    <string name="done">Listo</string>
+    <string name="best_response">Mejor respuesta</string>
+    <string name="mark_as_best">Marcar como mejor</string>
+    <string name="error_format">Error: %1$s</string>
+    <string name="response_time">Tiempo</string>
+    <string name="tokens_used">Tokens</string>
+    <string name="cost">Costo</string>
+    <string name="type_message_to_compare">Escribe un mensaje para comparar respuestas...</string>
+    <string name="send">Enviar</string>
+    <string name="select_models_and_send_message">Selecciona modelos y envía un mensaje</string>
+    <string name="minimum_2_models_required">Selecciona al menos 2 modelos para comparar</string>
+    <string name="dismiss">Cerrar</string>
 </resources>

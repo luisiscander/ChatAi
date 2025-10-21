@@ -212,4 +212,18 @@ object AppModuleProvider {
     ): DeleteAllDataUseCase {
         return DeleteAllDataUseCase(conversationRepository, userPreferencesRepository)
     }
+    
+    @Provides
+    @Singleton
+    fun provideManageComparisonModeUseCase(): ManageComparisonModeUseCase {
+        return ManageComparisonModeUseCase()
+    }
+    
+    @Provides
+    @Singleton
+    fun provideSendMessageToMultipleModelsUseCase(
+        streamAiResponseUseCase: StreamAiResponseUseCase
+    ): SendMessageToMultipleModelsUseCase {
+        return SendMessageToMultipleModelsUseCase(streamAiResponseUseCase)
+    }
 }

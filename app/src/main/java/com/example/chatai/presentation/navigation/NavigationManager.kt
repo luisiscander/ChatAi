@@ -10,6 +10,7 @@ import com.example.chatai.presentation.screens.ChatScreen
 import com.example.chatai.presentation.screens.ConversationListScreen
 import com.example.chatai.presentation.screens.DefaultModelSettingsScreen
 import com.example.chatai.presentation.screens.ExportConversationScreen
+import com.example.chatai.presentation.screens.ModelComparisonScreen
 import com.example.chatai.presentation.screens.OnboardingScreen
 import com.example.chatai.presentation.screens.SplashScreen
 import com.example.chatai.presentation.screens.ThemeSettingsScreen
@@ -25,6 +26,7 @@ object Routes {
     const val THEME_SETTINGS = "theme_settings"
     const val DEFAULT_MODEL_SETTINGS = "default_model_settings"
     const val EXPORT_CONVERSATION = "export_conversation/{conversationId}"
+    const val MODEL_COMPARISON = "model_comparison/{conversationId}"
 }
 
 @Composable
@@ -89,6 +91,9 @@ fun NavigationManager(
                 onNavigateToExportConversation = { 
                     navController.navigate(Routes.EXPORT_CONVERSATION.replace("{conversationId}", conversationId))
                 },
+                onNavigateToModelComparison = {
+                    navController.navigate(Routes.MODEL_COMPARISON.replace("{conversationId}", conversationId))
+                },
                 modifier = modifier
             )
         }
@@ -136,6 +141,17 @@ fun NavigationManager(
         composable(Routes.EXPORT_CONVERSATION) { backStackEntry ->
             val conversationId = backStackEntry.arguments?.getString("conversationId") ?: ""
             ExportConversationScreen(
+                conversationId = conversationId,
+                onBackClicked = {
+                    navController.popBackStack()
+                },
+                modifier = modifier
+            )
+        }
+        
+        composable(Routes.MODEL_COMPARISON) { backStackEntry ->
+            val conversationId = backStackEntry.arguments?.getString("conversationId") ?: ""
+            ModelComparisonScreen(
                 conversationId = conversationId,
                 onBackClicked = {
                     navController.popBackStack()

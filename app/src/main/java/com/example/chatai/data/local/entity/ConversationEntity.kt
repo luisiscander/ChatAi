@@ -13,6 +13,7 @@ data class ConversationEntity(
     val lastMessage: String?,
     val lastActivity: Long, // Timestamp
     val isArchived: Boolean = false,
+    val isFavorite: Boolean = false,
     val createdAt: Long, // Timestamp
     val updatedAt: Long // Timestamp
 ) {
@@ -24,6 +25,7 @@ data class ConversationEntity(
             lastMessage = lastMessage,
             lastActivity = Date(lastActivity),
             isArchived = isArchived,
+            isFavorite = isFavorite,
             createdAt = Date(createdAt),
             updatedAt = Date(updatedAt)
         )
@@ -38,6 +40,7 @@ data class ConversationEntity(
                 lastMessage = conversation.lastMessage,
                 lastActivity = conversation.lastActivity.time,
                 isArchived = conversation.isArchived,
+                isFavorite = conversation.isFavorite,
                 createdAt = conversation.createdAt.time,
                 updatedAt = conversation.updatedAt.time
             )

@@ -11,7 +11,7 @@ import com.example.chatai.data.local.entity.MessageEntity
 
 @Database(
     entities = [ConversationEntity::class, MessageEntity::class],
-    version = 2,
+    version = 3,
     exportSchema = false
 )
 abstract class ChatDatabase : RoomDatabase() {

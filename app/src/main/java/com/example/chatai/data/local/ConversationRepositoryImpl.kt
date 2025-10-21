@@ -35,6 +35,7 @@ class ConversationRepositoryImpl @Inject constructor(
             lastMessage = null,
             lastActivity = Date(),
             isArchived = false,
+            isFavorite = false,
             createdAt = Date(),
             updatedAt = Date()
         )
@@ -54,6 +55,14 @@ class ConversationRepositoryImpl @Inject constructor(
 
     override suspend fun unarchiveConversation(id: String) {
         // TODO: Implement when Room is ready
+    }
+    
+    override suspend fun toggleFavorite(id: String) {
+        // TODO: Implement when Room is ready
+    }
+    
+    override fun getFavoriteConversations(): Flow<List<Conversation>> {
+        return flowOf(emptyList())
     }
 
     override fun getMessagesByConversationId(conversationId: String): Flow<List<Message>> {

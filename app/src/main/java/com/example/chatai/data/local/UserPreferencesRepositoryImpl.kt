@@ -92,4 +92,16 @@ class UserPreferencesRepositoryImpl @Inject constructor(
     override suspend fun setMonthlyUsageLimit(limit: Double) = withContext(Dispatchers.IO) {
         sharedPreferences.edit().putFloat(KEY_MONTHLY_USAGE_LIMIT, limit.toFloat()).apply()
     }
+    
+    override suspend fun saveDraft(conversationId: String, draftText: String) = withContext(Dispatchers.IO) {
+        sharedPreferences.edit().putString("draft_$conversationId", draftText).apply()
+    }
+    
+    override suspend fun getDraft(conversationId: String): String? = withContext(Dispatchers.IO) {
+        sharedPreferences.getString("draft_$conversationId", null)
+    }
+    
+    override suspend fun clearDraft(conversationId: String) = withContext(Dispatchers.IO) {
+        sharedPreferences.edit().remove("draft_$conversationId").apply()
+    }
 }

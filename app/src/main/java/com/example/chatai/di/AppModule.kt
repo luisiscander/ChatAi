@@ -111,8 +111,11 @@ object AppModuleProvider {
     
     @Provides
     @Singleton
-    fun provideStreamAiResponseUseCase(): StreamAiResponseUseCase {
-        return StreamAiResponseUseCase()
+    fun provideStreamAiResponseUseCase(
+        apiService: com.example.chatai.data.remote.api.OpenRouterApiService,
+        gson: com.google.gson.Gson
+    ): StreamAiResponseUseCase {
+        return StreamAiResponseUseCase(apiService, gson)
     }
     
     @Provides

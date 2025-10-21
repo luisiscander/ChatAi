@@ -279,11 +279,13 @@ fun ChatScreen(
         }
         
         // Statistics dialog (Issue #113)
-        if (uiState.showStatistics && uiState.statistics != null) {
-            ConversationStatisticsDialog(
-                statistics = uiState.statistics,
-                onDismiss = { viewModel.hideStatistics() }
-            )
+        uiState.statistics?.let { statistics ->
+            if (uiState.showStatistics) {
+                ConversationStatisticsDialog(
+                    statistics = statistics,
+                    onDismiss = { viewModel.hideStatistics() }
+                )
+            }
         }
         
         // Usage alert (Issue #115)

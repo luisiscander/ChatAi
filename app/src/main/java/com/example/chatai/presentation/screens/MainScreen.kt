@@ -26,7 +26,7 @@ fun MainScreen(
     ) {
         Icon(
             imageVector = Icons.Default.Star,
-            contentDescription = "Chat AI Logo",
+            contentDescription = "Logo de Chat AI",
             modifier = Modifier.size(80.dp),
             tint = MaterialTheme.colorScheme.primary
         )

@@ -27,7 +27,7 @@ fun SplashScreen(
         // Logo de la aplicación
         Icon(
             imageVector = Icons.Default.Star,
-            contentDescription = "Chat AI Logo",
+            contentDescription = "Logo de Chat AI",
             modifier = Modifier.size(120.dp),
             tint = MaterialTheme.colorScheme.primary
         )

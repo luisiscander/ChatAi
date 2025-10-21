@@ -94,7 +94,7 @@ class UserPreferencesRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun clearApiKey() = withContext(Dispatchers.IO) {
+    override suspend fun clearApiKey(): Unit = withContext(Dispatchers.IO) {
         sharedPreferences.edit().remove(KEY_API_KEY).apply()
         // Issue #135: Safe logging
         Log.d(TAG, "API Key cleared")

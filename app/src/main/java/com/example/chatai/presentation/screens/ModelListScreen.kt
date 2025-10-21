@@ -7,14 +7,12 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
-import androidx.compose.material3.pulltorefresh.PullToRefreshContainer
-import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -35,32 +33,31 @@ fun ModelListScreen(
     val uiState by viewModel.uiState.collectAsState()
     var searchQuery by remember { mutableStateOf("") }
     
-    // Issue #130: Pull-to-refresh state
-    val pullToRefreshState = rememberPullToRefreshState()
-    
-    LaunchedEffect(uiState.isRefreshing) {
-        if (uiState.isRefreshing) {
-            pullToRefreshState.startRefresh()
-        } else {
-            pullToRefreshState.endRefresh()
-        }
-    }
-    
-    LaunchedEffect(pullToRefreshState.isRefreshing) {
-        if (pullToRefreshState.isRefreshing) {
-            viewModel.refreshModels()
-        }
-    }
-    
     Column(
         modifier = modifier.fillMaxSize()
     ) {
-        // Top App Bar
+        // Top App Bar with Issue #130: Refresh button
         TopAppBar(
             title = { Text("Modelos Disponibles") },
             navigationIcon = {
                 IconButton(onClick = onBackClicked) {
                     Icon(Icons.Default.ArrowBack, contentDescription = "Volver")
+                }
+            },
+            actions = {
+                // Issue #130: Refresh button
+                IconButton(
+                    onClick = { viewModel.refreshModels() },
+                    enabled = !uiState.isRefreshing
+                ) {
+                    if (uiState.isRefreshing) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(24.dp),
+                            strokeWidth = 2.dp
+                        )
+                    } else {
+                        Icon(Icons.Default.Refresh, contentDescription = "Actualizar")
+                    }
                 }
             }
         )
@@ -82,67 +79,55 @@ fun ModelListScreen(
             singleLine = true
         )
         
-        // Content with Pull-to-Refresh (Issue #130)
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .nestedScroll(pullToRefreshState.nestedScrollConnection)
-        ) {
-            when (val result = uiState.result) {
-                is com.example.chatai.domain.usecase.GetModelsResult.Loading -> {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        CircularProgressIndicator()
+        // Content - Issue #130: Refresh via button in toolbar
+        when (val result = uiState.result) {
+            is com.example.chatai.domain.usecase.GetModelsResult.Loading -> {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator()
+                }
+            }
+            is com.example.chatai.domain.usecase.GetModelsResult.Success -> {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    items(result.models) { model ->
+                        ModelItem(
+                            model = model,
+                            onClick = { onModelSelected(model) }
+                        )
                     }
                 }
-                is com.example.chatai.domain.usecase.GetModelsResult.Success -> {
-                    LazyColumn(
-                        modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
+            }
+            is com.example.chatai.domain.usecase.GetModelsResult.Error -> {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        items(result.models) { model ->
-                            ModelItem(
-                                model = model,
-                                onClick = { onModelSelected(model) }
-                            )
-                        }
-                    }
-                }
-                is com.example.chatai.domain.usecase.GetModelsResult.Error -> {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            Text(
-                                text = "Error al cargar modelos",
-                                style = MaterialTheme.typography.headlineSmall
-                            )
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(
-                                text = result.message,
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.error
-                            )
-                            Spacer(modifier = Modifier.height(16.dp))
-                            Button(onClick = { viewModel.refreshModels() }) {
-                                Text("Reintentar")
-                            }
+                        Text(
+                            text = "Error al cargar modelos",
+                            style = MaterialTheme.typography.headlineSmall
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = result.message,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Button(onClick = { viewModel.refreshModels() }) {
+                            Text("Reintentar")
                         }
                     }
                 }
             }
-            
-            // Issue #130: Pull-to-refresh indicator
-            PullToRefreshContainer(
-                state = pullToRefreshState,
-                modifier = Modifier.align(Alignment.TopCenter)
-            )
         }
     }
 }

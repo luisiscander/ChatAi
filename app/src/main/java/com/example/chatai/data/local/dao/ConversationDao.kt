@@ -6,7 +6,8 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface ConversationDao {
-    @Query("SELECT * FROM conversations WHERE isArchived = :isArchived ORDER BY lastActivity DESC")
+    // Issue #126: Order favorites first, then by date
+    @Query("SELECT * FROM conversations WHERE isArchived = :isArchived ORDER BY isFavorite DESC, lastActivity DESC")
     fun getConversationsByArchivedStatus(isArchived: Boolean): Flow<List<ConversationEntity>>
     
     @Query("SELECT * FROM conversations WHERE id = :id")
@@ -30,6 +31,15 @@ interface ConversationDao {
     @Query("UPDATE conversations SET isArchived = 0 WHERE id = :id")
     suspend fun unarchiveConversation(id: String)
     
-    @Query("SELECT * FROM conversations WHERE title LIKE '%' || :query || '%' OR lastMessage LIKE '%' || :query || '%' ORDER BY lastActivity DESC")
+    // Issue #123-125: Toggle favorite status
+    @Query("UPDATE conversations SET isFavorite = NOT isFavorite WHERE id = :id")
+    suspend fun toggleFavorite(id: String)
+    
+    // Issue #124: Get only favorite conversations
+    @Query("SELECT * FROM conversations WHERE isFavorite = 1 AND isArchived = 0 ORDER BY lastActivity DESC")
+    fun getFavoriteConversations(): Flow<List<ConversationEntity>>
+    
+    // Issue #126: Search also orders favorites first
+    @Query("SELECT * FROM conversations WHERE (title LIKE '%' || :query || '%' OR lastMessage LIKE '%' || :query || '%') ORDER BY isFavorite DESC, lastActivity DESC")
     fun searchConversations(query: String): Flow<List<ConversationEntity>>
 }

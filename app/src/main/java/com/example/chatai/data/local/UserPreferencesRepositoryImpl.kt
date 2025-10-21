@@ -2,7 +2,9 @@ package com.example.chatai.data.local
 
 import android.content.Context
 import android.content.SharedPreferences
+import android.util.Log
 import com.example.chatai.config.ApiConfig
+import com.example.chatai.data.local.security.EncryptionHelper
 import com.example.chatai.domain.model.ThemeMode
 import com.example.chatai.domain.repository.UserPreferencesRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -21,6 +23,7 @@ class UserPreferencesRepositoryImpl @Inject constructor(
     }
 
     companion object {
+        private const val TAG = "UserPrefsRepo"
         private const val PREFS_NAME = "chat_ai_preferences"
         private const val KEY_FIRST_TIME_USER = "first_time_user"
         private const val KEY_API_KEY = "api_key"
@@ -39,28 +42,62 @@ class UserPreferencesRepositoryImpl @Inject constructor(
 
     override suspend fun hasApiKey(): Boolean = withContext(Dispatchers.IO) {
         // Check if API key is available in configuration or user input
-        val userApiKey = sharedPreferences.getString(KEY_API_KEY, null)
-        !userApiKey.isNullOrBlank() || !ApiConfig.DEFAULT_API_KEY.isNullOrBlank()
+        val encryptedApiKey = sharedPreferences.getString(KEY_API_KEY, null)
+        !encryptedApiKey.isNullOrBlank() || !ApiConfig.DEFAULT_API_KEY.isNullOrBlank()
     }
 
-    override suspend fun setApiKey(apiKey: String) = withContext(Dispatchers.IO) {
-        // Store user-provided API key in SharedPreferences
-        sharedPreferences.edit().putString(KEY_API_KEY, apiKey).apply()
+    // Issue #134 & #135: Encrypt API Key before storing
+    override suspend fun setApiKey(apiKey: String): Unit = withContext(Dispatchers.IO) {
+        try {
+            // Issue #134: Encrypt using Android Keystore
+            val encryptedKey = EncryptionHelper.encrypt(apiKey)
+            sharedPreferences.edit().putString(KEY_API_KEY, encryptedKey).apply()
+            
+            // Issue #135: Never log the actual API key
+            Log.d(TAG, "API Key saved successfully (encrypted)")
+        } catch (e: Exception) {
+            // Issue #135: Log error without exposing the key
+            Log.e(TAG, "Failed to save API Key: ${e.message}")
+            throw e
+        }
     }
 
+    // Issue #134 & #135: Decrypt API Key when retrieving
     override suspend fun getApiKey(): String? = withContext(Dispatchers.IO) {
-        // Priority: 1. User-provided API key, 2. Default API key from config
-        val userApiKey = sharedPreferences.getString(KEY_API_KEY, null)
-        
-        when {
-            !userApiKey.isNullOrBlank() -> userApiKey
-            !ApiConfig.DEFAULT_API_KEY.isNullOrBlank() -> ApiConfig.DEFAULT_API_KEY
-            else -> null
+        try {
+            // Priority: 1. User-provided API key, 2. Default API key from config
+            val encryptedUserApiKey = sharedPreferences.getString(KEY_API_KEY, null)
+            
+            when {
+                !encryptedUserApiKey.isNullOrBlank() -> {
+                    // Issue #134: Decrypt the stored API key
+                    val decryptedKey = EncryptionHelper.decrypt(encryptedUserApiKey)
+                    // Issue #135: Never log the actual key
+                    Log.d(TAG, "API Key retrieved: ${EncryptionHelper.maskForLogging(decryptedKey)}")
+                    decryptedKey
+                }
+                !ApiConfig.DEFAULT_API_KEY.isNullOrBlank() -> {
+                    // Issue #135: Mask default API key in logs
+                    Log.d(TAG, "Using default API Key: ${EncryptionHelper.maskForLogging(ApiConfig.DEFAULT_API_KEY)}")
+                    ApiConfig.DEFAULT_API_KEY
+                }
+                else -> {
+                    Log.w(TAG, "No API Key found")
+                    null
+                }
+            }
+        } catch (e: Exception) {
+            // Issue #135: Log error without exposing keys
+            Log.e(TAG, "Failed to retrieve API Key: ${e.message}")
+            // Fallback to default if decryption fails
+            ApiConfig.DEFAULT_API_KEY
         }
     }
 
     override suspend fun clearApiKey() = withContext(Dispatchers.IO) {
         sharedPreferences.edit().remove(KEY_API_KEY).apply()
+        // Issue #135: Safe logging
+        Log.d(TAG, "API Key cleared")
     }
 
     override suspend fun getThemeMode(): ThemeMode = withContext(Dispatchers.IO) {

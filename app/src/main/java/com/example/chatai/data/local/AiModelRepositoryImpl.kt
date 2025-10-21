@@ -1,16 +1,27 @@
 package com.example.chatai.data.local
 
+import com.example.chatai.data.local.dao.AiModelDao
+import com.example.chatai.data.local.entity.AiModelEntity
 import com.example.chatai.domain.model.AiModel
 import com.example.chatai.domain.model.ModelPricing
 import com.example.chatai.domain.model.RateLimits
 import com.example.chatai.domain.repository.AiModelRepository
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class AiModelRepositoryImpl @Inject constructor() : AiModelRepository {
+class AiModelRepositoryImpl @Inject constructor(
+    private val aiModelDao: AiModelDao // Issue #127-130: DAO for caching
+) : AiModelRepository {
+    
+    // Issue #129: Cache validity period (24 hours)
+    private val CACHE_VALIDITY_PERIOD = 24 * 60 * 60 * 1000L // 24 hours in milliseconds
 
     // Simulated models data
     private val simulatedModels = listOf(
@@ -92,32 +103,75 @@ class AiModelRepositoryImpl @Inject constructor() : AiModelRepository {
         )
     )
 
+    // Issue #127-128: Load from cache first, fetch if empty
     override suspend fun getAllModels(): Flow<List<AiModel>> {
-        return flowOf(simulatedModels)
+        return aiModelDao.getAllModels()
+            .map { entities -> entities.map { it.toDomain() } }
+            .onStart {
+                // Issue #127: First load - populate cache if empty
+                if (aiModelDao.getModelsCount() == 0) {
+                    loadInitialModels()
+                } else {
+                    // Issue #129: Check for background update
+                    checkAndUpdateCacheInBackground()
+                }
+            }
     }
 
     override suspend fun getModelsByCompany(company: String): Flow<List<AiModel>> {
-        val filteredModels = simulatedModels.filter { it.company.equals(company, ignoreCase = true) }
-        return flowOf(filteredModels)
+        return aiModelDao.getModelsByCompany(company)
+            .map { entities -> entities.map { it.toDomain() } }
     }
 
     override suspend fun searchModels(query: String): Flow<List<AiModel>> {
-        val filteredModels = simulatedModels.filter { model ->
-            model.name.contains(query, ignoreCase = true) ||
-            model.company.contains(query, ignoreCase = true) ||
-            model.id.contains(query, ignoreCase = true)
-        }
-        return flowOf(filteredModels)
+        return aiModelDao.searchModels(query)
+            .map { entities -> entities.map { it.toDomain() } }
     }
 
     override suspend fun getModelById(id: String): Flow<AiModel?> {
-        val model = simulatedModels.find { it.id == id }
-        return flowOf(model)
+        return aiModelDao.getModelById(id)
+            .map { entity -> entity?.toDomain() }
     }
 
+    // Issue #130: Force refresh (pull-to-refresh)
     override suspend fun refreshModels(): Result<Unit> {
-        // Simulate API call delay
-        kotlinx.coroutines.delay(1000)
-        return Result.success(Unit)
+        return try {
+            // Simulate API call delay
+            kotlinx.coroutines.delay(1500)
+            
+            // Clear old cache and load new models
+            aiModelDao.clearAllModels()
+            loadInitialModels()
+            
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+    
+    // Issue #127: Load initial models into cache
+    private suspend fun loadInitialModels() {
+        val entities = simulatedModels.map { AiModelEntity.fromDomain(it) }
+        aiModelDao.insertModels(entities)
+    }
+    
+    // Issue #129: Background update check
+    private fun checkAndUpdateCacheInBackground() {
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                val lastUpdate = aiModelDao.getLastUpdateTimestamp() ?: 0L
+                val currentTime = System.currentTimeMillis()
+                
+                // If cache is older than 24 hours, update in background
+                if (currentTime - lastUpdate > CACHE_VALIDITY_PERIOD) {
+                    // Simulate checking for new models
+                    kotlinx.coroutines.delay(2000)
+                    // In a real implementation, fetch from API and update cache
+                    loadInitialModels()
+                }
+            } catch (e: Exception) {
+                // Silent failure for background update
+            }
+        }
     }
 }

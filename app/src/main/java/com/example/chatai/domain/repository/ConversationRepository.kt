@@ -22,6 +22,12 @@ interface ConversationRepository {
     suspend fun addMessage(message: Message)
     suspend fun deleteMessage(id: String)
     
+    // Issue #131-133: Paginación y búsqueda de mensajes
+    suspend fun getRecentMessages(conversationId: String, limit: Int = 50): List<Message>
+    suspend fun getMessagesBeforeTimestamp(conversationId: String, beforeTimestamp: Long, limit: Int = 30): List<Message>
+    suspend fun searchMessagesInConversation(conversationId: String, query: String): List<Message>
+    suspend fun getMessageCount(conversationId: String): Int
+    
     // Búsqueda
     suspend fun searchConversations(query: String): Flow<List<Conversation>>
 }

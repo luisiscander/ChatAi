@@ -13,7 +13,7 @@ import com.example.chatai.data.local.entity.MessageEntity
 
 @Database(
     entities = [ConversationEntity::class, MessageEntity::class, AiModelEntity::class],
-    version = 4, // Issue #127: Added AiModelEntity for caching
+    version = 5, // Issue #138: Added isPrivate field to ConversationEntity
     exportSchema = false
 )
 abstract class ChatDatabase : RoomDatabase() {

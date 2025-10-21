@@ -19,7 +19,11 @@ data class Message(
     val content: String,
     val isFromUser: Boolean,
     val timestamp: Date,
-    val model: String?
+    val model: String?,
+    val inputTokens: Int? = null,
+    val outputTokens: Int? = null,
+    val totalTokens: Int? = null,
+    val estimatedCost: Double? = null
 )
 
 enum class ModelType(val displayName: String, val icon: String) {

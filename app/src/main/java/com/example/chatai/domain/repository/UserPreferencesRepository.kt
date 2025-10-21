@@ -17,4 +17,8 @@ interface UserPreferencesRepository {
     // Default model preferences
     suspend fun getDefaultModel(): String?
     suspend fun setDefaultModel(modelId: String)
+    
+    // Usage limit preferences
+    suspend fun getMonthlyUsageLimit(): Double?
+    suspend fun setMonthlyUsageLimit(limit: Double)
 }

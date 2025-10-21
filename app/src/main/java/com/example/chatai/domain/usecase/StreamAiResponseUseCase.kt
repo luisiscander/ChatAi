@@ -24,13 +24,29 @@ class StreamAiResponseUseCase @Inject constructor() {
                 emit(StreamChunk.Text(word + if (index < words.size - 1) " " else ""))
             }
             
-            emit(StreamChunk.Complete)
+            // Simulate token usage (in a real implementation, this would come from the API)
+            val inputTokenCount = userMessage.content.length / 4 // Rough estimate
+            val outputTokenCount = fullResponse.length / 4
+            val totalTokenCount = inputTokenCount + outputTokenCount
+            val estimatedCost = (totalTokenCount / 1000.0) * 0.01 // Rough estimate at $0.01 per 1K tokens
+            
+            emit(StreamChunk.Complete(
+                inputTokens = inputTokenCount,
+                outputTokens = outputTokenCount,
+                totalTokens = totalTokenCount,
+                estimatedCost = estimatedCost
+            ))
         }
     }
 }
 
 sealed class StreamChunk {
     data class Text(val content: String) : StreamChunk()
-    object Complete : StreamChunk()
+    data class Complete(
+        val inputTokens: Int? = null,
+        val outputTokens: Int? = null,
+        val totalTokens: Int? = null,
+        val estimatedCost: Double? = null
+    ) : StreamChunk()
     data class Error(val message: String) : StreamChunk()
 }

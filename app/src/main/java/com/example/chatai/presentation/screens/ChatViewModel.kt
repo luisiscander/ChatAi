@@ -26,6 +26,8 @@ class ChatViewModel @Inject constructor(
     private val getMessagesWithPaginationUseCase: GetMessagesWithPaginationUseCase,
     private val checkNetworkConnectionUseCase: CheckNetworkConnectionUseCase,
     private val validateApiKeyConnectionUseCase: ValidateApiKeyConnectionUseCase,
+    private val getConversationStatisticsUseCase: GetConversationStatisticsUseCase,
+    private val checkUsageLimitUseCase: CheckUsageLimitUseCase,
     private val userPreferencesRepository: UserPreferencesRepository
 ) : ViewModel() {
 
@@ -158,7 +160,11 @@ class ChatViewModel @Inject constructor(
                                         content = _uiState.value.streamingText,
                                         isFromUser = false,
                                         timestamp = Date(),
-                                        model = "gpt-4"
+                                        model = "gpt-4",
+                                        inputTokens = chunk.inputTokens,
+                                        outputTokens = chunk.outputTokens,
+                                        totalTokens = chunk.totalTokens,
+                                        estimatedCost = chunk.estimatedCost
                                     )
 
                                     val updatedMessages = currentMessages.toMutableList()
@@ -172,6 +178,9 @@ class ChatViewModel @Inject constructor(
                                         isEnabled = true,
                                         error = null
                                     )
+                                    
+                                    // Check usage limit after message is sent (Issue #115)
+                                    checkUsageLimit()
                                 }
                                 is StreamChunk.Error -> {
                                     _uiState.value = _uiState.value.copy(
@@ -376,6 +385,72 @@ class ChatViewModel @Inject constructor(
             }
         }
     }
+    
+    fun showStatistics() {
+        viewModelScope.launch {
+            val result = getConversationStatisticsUseCase(_uiState.value.conversationId)
+            when (result) {
+                is ConversationStatisticsResult.Success -> {
+                    _uiState.value = _uiState.value.copy(
+                        showStatistics = true,
+                        statistics = result.statistics
+                    )
+                }
+                is ConversationStatisticsResult.Error -> {
+                    _uiState.value = _uiState.value.copy(
+                        error = result.message
+                    )
+                }
+            }
+        }
+    }
+    
+    fun hideStatistics() {
+        _uiState.value = _uiState.value.copy(
+            showStatistics = false
+        )
+    }
+    
+    private fun checkUsageLimit() {
+        viewModelScope.launch {
+            when (val result = checkUsageLimitUseCase()) {
+                is UsageLimitResult.HighUsage -> {
+                    _uiState.value = _uiState.value.copy(
+                        usageAlert = UsageAlert(
+                            message = "Has usado $%.2f de tu límite de $%.2f".format(
+                                result.currentUsage, 
+                                result.limit
+                            ),
+                            currentUsage = result.currentUsage,
+                            limit = result.limit,
+                            isExceeded = false
+                        )
+                    )
+                }
+                is UsageLimitResult.LimitExceeded -> {
+                    _uiState.value = _uiState.value.copy(
+                        usageAlert = UsageAlert(
+                            message = "Has excedido tu límite mensual de $%.2f".format(result.limit),
+                            currentUsage = result.currentUsage,
+                            limit = result.limit,
+                            isExceeded = true
+                        )
+                    )
+                }
+                else -> {
+                    // Normal usage, no alert needed
+                }
+            }
+        }
+    }
+    
+    fun dismissUsageAlert() {
+        _uiState.value = _uiState.value.copy(usageAlert = null)
+    }
+    
+    fun checkNetworkConnection(): Boolean {
+        return checkNetworkConnectionUseCase()
+    }
 
 }
 
@@ -396,5 +471,15 @@ data class ChatUiState(
     val isAutoScrollEnabled: Boolean = true,
     val showNewMessageNotification: Boolean = false,
     val isLoadingMoreMessages: Boolean = false,
-    val hasMoreMessages: Boolean = true
+    val hasMoreMessages: Boolean = true,
+    val showStatistics: Boolean = false,
+    val statistics: ConversationStatistics? = null,
+    val usageAlert: UsageAlert? = null
+)
+
+data class UsageAlert(
+    val message: String,
+    val currentUsage: Double,
+    val limit: Double,
+    val isExceeded: Boolean
 )

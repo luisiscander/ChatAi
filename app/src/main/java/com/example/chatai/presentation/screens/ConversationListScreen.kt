@@ -46,6 +46,15 @@ fun ConversationListScreen(
     var showSearch by remember { mutableStateOf(false) }
     var searchText by remember { mutableStateOf("") }
     val coroutineScope = rememberCoroutineScope()
+    var isOnline by remember { mutableStateOf(true) }
+    
+    // Check network connectivity (Issue #116)
+    LaunchedEffect(Unit) {
+        while (true) {
+            isOnline = viewModel.checkNetworkConnection()
+            kotlinx.coroutines.delay(5000) // Check every 5 seconds
+        }
+    }
     
     // Function to handle conversation creation
     val handleCreateConversation: () -> Unit = {
@@ -139,7 +148,31 @@ fun ConversationListScreen(
         },
         modifier = modifier
     ) { paddingValues ->
-        when {
+        Column(modifier = Modifier.fillMaxSize()) {
+            // Offline indicator (Issue #116)
+            if (!isOnline) {
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    color = MaterialTheme.colorScheme.errorContainer
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(8.dp),
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Sin conexión",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onErrorContainer,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+            }
+            
+            when {
             uiState.isLoading -> {
                 Box(
                     modifier = Modifier.fillMaxSize(),
@@ -206,6 +239,7 @@ fun ConversationListScreen(
                         )
                     }
                 }
+            }
             }
         }
     }

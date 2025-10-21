@@ -12,7 +12,11 @@ data class MessageEntity(
     val content: String,
     val isFromUser: Boolean,
     val timestamp: Long, // Timestamp
-    val model: String?
+    val model: String?,
+    val inputTokens: Int? = null,
+    val outputTokens: Int? = null,
+    val totalTokens: Int? = null,
+    val estimatedCost: Double? = null
 ) {
     fun toDomain(): com.example.chatai.domain.model.Message {
         return com.example.chatai.domain.model.Message(
@@ -21,7 +25,11 @@ data class MessageEntity(
             content = content,
             isFromUser = isFromUser,
             timestamp = Date(timestamp),
-            model = model
+            model = model,
+            inputTokens = inputTokens,
+            outputTokens = outputTokens,
+            totalTokens = totalTokens,
+            estimatedCost = estimatedCost
         )
     }
     
@@ -33,7 +41,11 @@ data class MessageEntity(
                 content = message.content,
                 isFromUser = message.isFromUser,
                 timestamp = message.timestamp.time,
-                model = message.model
+                model = message.model,
+                inputTokens = message.inputTokens,
+                outputTokens = message.outputTokens,
+                totalTokens = message.totalTokens,
+                estimatedCost = message.estimatedCost
             )
         }
     }

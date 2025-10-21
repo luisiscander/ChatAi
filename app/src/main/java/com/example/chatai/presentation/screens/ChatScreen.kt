@@ -12,6 +12,7 @@ import androidx.compose.material.icons.filled.Send
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -26,6 +27,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.chatai.R
 import com.example.chatai.domain.model.Message
 import com.example.chatai.domain.usecase.MessageValidationResult
+import com.example.chatai.domain.usecase.ConversationStatistics
 import com.example.chatai.ui.theme.ChatAiTheme
 import java.text.SimpleDateFormat
 import java.util.*
@@ -45,6 +47,15 @@ fun ChatScreen(
     val listState = rememberLazyListState()
     var showDeleteDialog by remember { mutableStateOf(false) }
     var messageToDelete by remember { mutableStateOf<Message?>(null) }
+    var isOnline by remember { mutableStateOf(true) }
+    
+    // Check network connectivity (Issue #116)
+    LaunchedEffect(Unit) {
+        while (true) {
+            isOnline = viewModel.checkNetworkConnection()
+            kotlinx.coroutines.delay(5000) // Check every 5 seconds
+        }
+    }
     
     // Load conversation history when screen opens
     LaunchedEffect(conversationId) {
@@ -87,6 +98,9 @@ fun ChatScreen(
                     }
                 },
                 actions = {
+                    IconButton(onClick = { viewModel.showStatistics() }) {
+                        Icon(Icons.Default.Info, contentDescription = "Estadísticas")
+                    }
                     IconButton(onClick = onNavigateToModelComparison) {
                         Icon(Icons.Default.Star, contentDescription = stringResource(R.string.comparison_mode))
                     }
@@ -100,6 +114,29 @@ fun ChatScreen(
         Column(
             modifier = modifier.fillMaxSize()
         ) {
+            // Offline indicator (Issue #116)
+            if (!isOnline) {
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    color = MaterialTheme.colorScheme.errorContainer
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(8.dp),
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Sin conexión",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onErrorContainer,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+            }
+            
             // Messages List
             Box(
                 modifier = Modifier.weight(1f)
@@ -240,6 +277,43 @@ fun ChatScreen(
                 }
             )
         }
+        
+        // Statistics dialog (Issue #113)
+        if (uiState.showStatistics && uiState.statistics != null) {
+            ConversationStatisticsDialog(
+                statistics = uiState.statistics,
+                onDismiss = { viewModel.hideStatistics() }
+            )
+        }
+        
+        // Usage alert (Issue #115)
+        uiState.usageAlert?.let { alert ->
+            AlertDialog(
+                onDismissRequest = { viewModel.dismissUsageAlert() },
+                title = { 
+                    Text(
+                        text = if (alert.isExceeded) "Límite Excedido" else "Alto Uso",
+                        color = if (alert.isExceeded) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
+                    )
+                },
+                text = { 
+                    Column {
+                        Text(alert.message)
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = "Se te sugiere revisar tu uso.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                },
+                confirmButton = {
+                    TextButton(onClick = { viewModel.dismissUsageAlert() }) {
+                        Text("Entendido")
+                    }
+                }
+            )
+        }
     }
 }
 
@@ -254,6 +328,7 @@ fun MessageBubble(
     val dateFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
     
     var showContextMenu by remember { mutableStateOf(false) }
+    var showTokenDetails by remember { mutableStateOf(false) }
 
     Row(
         modifier = modifier,
@@ -283,6 +358,18 @@ fun MessageBubble(
                     style = MaterialTheme.typography.bodyLarge
                 )
                 Spacer(modifier = Modifier.height(4.dp))
+                
+                // Token usage indicator for assistant messages (Issue #112)
+                if (!isUserMessage && message.totalTokens != null) {
+                    TokenUsageIndicator(
+                        message = message,
+                        showDetails = showTokenDetails,
+                        onToggleDetails = { showTokenDetails = !showTokenDetails },
+                        modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                }
+                
                 Text(
                     text = dateFormat.format(message.timestamp),
                     style = MaterialTheme.typography.labelSmall,
@@ -468,6 +555,182 @@ fun MessageInput(
                 modifier = Modifier.fillMaxWidth(),
                 textAlign = TextAlign.End
             )
+        }
+    }
+}
+
+@Composable
+fun ConversationStatisticsDialog(
+    statistics: ConversationStatistics,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { 
+            Text(
+                text = "Estadísticas de Conversación",
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold
+            )
+        },
+        text = {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                StatisticRow(
+                    label = "Total mensajes",
+                    value = statistics.totalMessages.toString()
+                )
+                StatisticRow(
+                    label = "Total tokens usados",
+                    value = statistics.totalTokens.toString()
+                )
+                StatisticRow(
+                    label = "Costo total aproximado",
+                    value = "$%.2f".format(statistics.totalCost)
+                )
+                StatisticRow(
+                    label = "Modelo más usado",
+                    value = statistics.mostUsedModel
+                )
+                StatisticRow(
+                    label = "Tiempo total de chat",
+                    value = statistics.chatDuration
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cerrar")
+            }
+        }
+    )
+}
+
+@Composable
+fun StatisticRow(
+    label: String,
+    value: String,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Text(
+            text = value,
+            style = MaterialTheme.typography.bodyLarge,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.primary
+        )
+    }
+}
+
+@Composable
+fun TokenUsageIndicator(
+    message: Message,
+    showDetails: Boolean,
+    onToggleDetails: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        onClick = onToggleDetails,
+        modifier = modifier,
+        color = MaterialTheme.colorScheme.surface,
+        shape = RoundedCornerShape(8.dp),
+        tonalElevation = 1.dp
+    ) {
+        Column(
+            modifier = Modifier.padding(8.dp)
+        ) {
+            // Token summary
+            Text(
+                text = "~${message.totalTokens ?: 0} tokens",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.primary,
+                fontWeight = FontWeight.Medium
+            )
+            
+            // Detailed breakdown
+            if (showDetails) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Divider()
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        text = "Input tokens",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        text = "${message.inputTokens ?: 0}",
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+                
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        text = "Output tokens",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        text = "${message.outputTokens ?: 0}",
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+                
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        text = "Total tokens",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        text = "${message.totalTokens ?: 0}",
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+                
+                message.estimatedCost?.let { cost ->
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = "Costo aprox.",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Text(
+                            text = "$%.4f".format(cost),
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
+            }
         }
     }
 }

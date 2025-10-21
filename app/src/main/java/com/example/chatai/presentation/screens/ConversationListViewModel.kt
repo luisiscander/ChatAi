@@ -20,7 +20,8 @@ class ConversationListViewModel @Inject constructor(
     private val getConversationsUseCase: GetConversationsUseCase,
     private val archiveConversationUseCase: ArchiveConversationUseCase,
     private val searchConversationsUseCase: SearchConversationsUseCase,
-    private val createConversationUseCase: com.example.chatai.domain.usecase.CreateConversationUseCase
+    private val createConversationUseCase: com.example.chatai.domain.usecase.CreateConversationUseCase,
+    private val checkNetworkConnectionUseCase: com.example.chatai.domain.usecase.CheckNetworkConnectionUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ConversationListUiState())
@@ -109,6 +110,10 @@ class ConversationListViewModel @Inject constructor(
             _uiState.value = _uiState.value.copy(error = e.message)
             null
         }
+    }
+    
+    fun checkNetworkConnection(): Boolean {
+        return checkNetworkConnectionUseCase()
     }
 }
 

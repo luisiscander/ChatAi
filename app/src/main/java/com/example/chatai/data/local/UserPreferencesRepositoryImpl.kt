@@ -26,6 +26,7 @@ class UserPreferencesRepositoryImpl @Inject constructor(
         private const val KEY_API_KEY = "api_key"
         private const val KEY_THEME_MODE = "theme_mode"
         private const val KEY_DEFAULT_MODEL = "default_model"
+        private const val KEY_MONTHLY_USAGE_LIMIT = "monthly_usage_limit"
     }
 
     override suspend fun isFirstTimeUser(): Boolean = withContext(Dispatchers.IO) {
@@ -81,5 +82,14 @@ class UserPreferencesRepositoryImpl @Inject constructor(
 
     override suspend fun setDefaultModel(modelId: String) = withContext(Dispatchers.IO) {
         sharedPreferences.edit().putString(KEY_DEFAULT_MODEL, modelId).apply()
+    }
+    
+    override suspend fun getMonthlyUsageLimit(): Double? = withContext(Dispatchers.IO) {
+        val limit = sharedPreferences.getFloat(KEY_MONTHLY_USAGE_LIMIT, -1f)
+        if (limit == -1f) null else limit.toDouble()
+    }
+    
+    override suspend fun setMonthlyUsageLimit(limit: Double) = withContext(Dispatchers.IO) {
+        sharedPreferences.edit().putFloat(KEY_MONTHLY_USAGE_LIMIT, limit.toFloat()).apply()
     }
 }

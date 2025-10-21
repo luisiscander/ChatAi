@@ -23,83 +23,103 @@ class AiModelRepositoryImpl @Inject constructor(
     // Issue #129: Cache validity period (24 hours)
     private val CACHE_VALIDITY_PERIOD = 24 * 60 * 60 * 1000L // 24 hours in milliseconds
 
-    // Simulated models data
+    // Google Gemini models from OpenRouter
+    // https://openrouter.ai/models
     private val simulatedModels = listOf(
         AiModel(
-            id = "openai/gpt-4-turbo",
-            name = "GPT-4 Turbo",
-            company = "OpenAI",
-            context = "128k tokens",
-            pricing = ModelPricing(
-                input = "$0.01 / 1K tokens",
-                output = "$0.03 / 1K tokens",
-                inputPricePer1k = 0.01,
-                outputPricePer1k = 0.03
-            ),
-            description = "Most capable GPT-4 model with improved speed and lower costs",
-            capabilities = listOf("Text generation", "Code completion", "Analysis"),
-            rateLimits = RateLimits(
-                requestsPerMinute = 500,
-                tokensPerMinute = 150000
-            ),
-            documentationUrl = "https://platform.openai.com/docs/models/gpt-4"
-        ),
-        AiModel(
-            id = "anthropic/claude-3-opus-20240229",
-            name = "Claude 3 Opus",
-            company = "Anthropic",
-            context = "200k tokens",
-            pricing = ModelPricing(
-                input = "$0.015 / 1K tokens",
-                output = "$0.075 / 1K tokens",
-                inputPricePer1k = 0.015,
-                outputPricePer1k = 0.075
-            ),
-            description = "Most powerful Claude model for complex tasks",
-            capabilities = listOf("Text generation", "Analysis", "Reasoning"),
-            rateLimits = RateLimits(
-                requestsPerMinute = 5,
-                tokensPerMinute = 7500
-            ),
-            documentationUrl = "https://docs.anthropic.com/claude/docs"
-        ),
-        AiModel(
-            id = "meta-llama/llama-3-70b-instruct",
-            name = "Llama 3 70B Instruct",
-            company = "Meta",
-            context = "8k tokens",
-            pricing = ModelPricing(
-                input = "$0.0008 / 1K tokens",
-                output = "$0.0008 / 1K tokens",
-                inputPricePer1k = 0.0008,
-                outputPricePer1k = 0.0008
-            ),
-            description = "Large language model by Meta for instruction following",
-            capabilities = listOf("Text generation", "Code completion"),
-            rateLimits = RateLimits(
-                requestsPerMinute = 30,
-                tokensPerMinute = 30000
-            ),
-            documentationUrl = "https://huggingface.co/meta-llama/Llama-3-70B-Instruct"
-        ),
-        AiModel(
-            id = "google/gemini-pro",
-            name = "Gemini Pro",
+            id = "google/gemini-2.0-flash-exp:free",
+            name = "Gemini 2.0 Flash (Experimental)",
             company = "Google",
-            context = "32k tokens",
+            context = "1M tokens",
             pricing = ModelPricing(
-                input = "$0.0005 / 1K tokens",
-                output = "$0.0015 / 1K tokens",
-                inputPricePer1k = 0.0005,
-                outputPricePer1k = 0.0015
+                input = "Gratis",
+                output = "Gratis",
+                inputPricePer1k = 0.0,
+                outputPricePer1k = 0.0
             ),
-            description = "Google's most capable model for complex reasoning",
-            capabilities = listOf("Text generation", "Multimodal", "Code generation"),
+            description = "Versión experimental gratuita del Gemini 2.0 Flash con capacidades multimodales",
+            capabilities = listOf("Text generation", "Multimodal", "Code generation", "Analysis"),
             rateLimits = RateLimits(
                 requestsPerMinute = 60,
                 tokensPerMinute = 60000
             ),
-            documentationUrl = "https://ai.google.dev/docs"
+            documentationUrl = "https://ai.google.dev/gemini-api/docs"
+        ),
+        AiModel(
+            id = "google/gemini-exp-1206:free",
+            name = "Gemini Experimental 1206",
+            company = "Google",
+            context = "2M tokens",
+            pricing = ModelPricing(
+                input = "Gratis",
+                output = "Gratis",
+                inputPricePer1k = 0.0,
+                outputPricePer1k = 0.0
+            ),
+            description = "Versión experimental gratuita con ventana de contexto extendida",
+            capabilities = listOf("Text generation", "Long context", "Analysis", "Reasoning"),
+            rateLimits = RateLimits(
+                requestsPerMinute = 60,
+                tokensPerMinute = 120000
+            ),
+            documentationUrl = "https://ai.google.dev/gemini-api/docs"
+        ),
+        AiModel(
+            id = "google/gemini-flash-1.5-8b",
+            name = "Gemini Flash 1.5 8B",
+            company = "Google",
+            context = "1M tokens",
+            pricing = ModelPricing(
+                input = "$0.000075 / 1K tokens",
+                output = "$0.0003 / 1K tokens",
+                inputPricePer1k = 0.000075,
+                outputPricePer1k = 0.0003
+            ),
+            description = "Modelo rápido y económico ideal para tareas frecuentes",
+            capabilities = listOf("Text generation", "Code completion", "Fast responses"),
+            rateLimits = RateLimits(
+                requestsPerMinute = 120,
+                tokensPerMinute = 120000
+            ),
+            documentationUrl = "https://ai.google.dev/gemini-api/docs"
+        ),
+        AiModel(
+            id = "google/gemini-flash-1.5",
+            name = "Gemini Flash 1.5",
+            company = "Google",
+            context = "1M tokens",
+            pricing = ModelPricing(
+                input = "$0.00015 / 1K tokens",
+                output = "$0.0006 / 1K tokens",
+                inputPricePer1k = 0.00015,
+                outputPricePer1k = 0.0006
+            ),
+            description = "Balance perfecto entre velocidad y capacidad",
+            capabilities = listOf("Text generation", "Code generation", "Analysis", "Multimodal"),
+            rateLimits = RateLimits(
+                requestsPerMinute = 100,
+                tokensPerMinute = 100000
+            ),
+            documentationUrl = "https://ai.google.dev/gemini-api/docs"
+        ),
+        AiModel(
+            id = "google/gemini-pro-1.5",
+            name = "Gemini Pro 1.5",
+            company = "Google",
+            context = "2M tokens",
+            pricing = ModelPricing(
+                input = "$0.00125 / 1K tokens",
+                output = "$0.005 / 1K tokens",
+                inputPricePer1k = 0.00125,
+                outputPricePer1k = 0.005
+            ),
+            description = "Modelo más capaz de Google para razonamiento complejo y análisis profundo",
+            capabilities = listOf("Text generation", "Advanced reasoning", "Multimodal", "Code generation", "Long context"),
+            rateLimits = RateLimits(
+                requestsPerMinute = 80,
+                tokensPerMinute = 160000
+            ),
+            documentationUrl = "https://ai.google.dev/gemini-api/docs"
         )
     )
 

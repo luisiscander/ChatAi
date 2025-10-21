@@ -149,7 +149,7 @@ class ChatViewModel @Inject constructor(
 
                         cancelStreamingUseCase.reset()
 
-                        streamAiResponseUseCase(userMessage, apiKey).collect { chunk ->
+                        streamAiResponseUseCase(userMessage, apiKey, _uiState.value.selectedModel).collect { chunk ->
                             if (cancelStreamingUseCase.isCancelled()) {
                                 return@collect
                             }
@@ -167,7 +167,7 @@ class ChatViewModel @Inject constructor(
                                         content = _uiState.value.streamingText,
                                         isFromUser = false,
                                         timestamp = Date(),
-                                        model = "gpt-4",
+                                        model = _uiState.value.selectedModel,
                                         inputTokens = chunk.inputTokens,
                                         outputTokens = chunk.outputTokens,
                                         totalTokens = chunk.totalTokens,
@@ -551,6 +551,11 @@ class ChatViewModel @Inject constructor(
             }
         }
     }
+    
+    // Cambiar modelo seleccionado
+    fun changeModel(modelId: String) {
+        _uiState.value = _uiState.value.copy(selectedModel = modelId)
+    }
 
 }
 
@@ -565,6 +570,7 @@ data class ChatUiState(
     val isEnabled: Boolean = true,
     val conversationId: String = "",
     val conversationTitle: String = "New Conversation",
+    val selectedModel: String = "google/gemini-2.0-flash-exp:free", // Default to free Google model
     val error: String? = null,
     val copySuccessMessage: String? = null,
     val isLoadingHistory: Boolean = false,

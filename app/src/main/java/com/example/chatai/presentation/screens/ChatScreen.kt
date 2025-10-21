@@ -13,6 +13,7 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -51,6 +52,18 @@ fun ChatScreen(
     var wasOffline by remember { mutableStateOf(false) }
     var showReconnectedMessage by remember { mutableStateOf(false) }
     var isSyncing by remember { mutableStateOf(false) }
+    var showModelMenu by remember { mutableStateOf(false) }
+    
+    // Lista de modelos disponibles
+    val availableModels = remember {
+        listOf(
+            "google/gemini-2.0-flash-exp:free" to "Gemini 2.0 Flash (Gratis)",
+            "google/gemini-exp-1206:free" to "Gemini Exp 1206 (Gratis)",
+            "google/gemini-flash-1.5-8b" to "Gemini Flash 1.5 8B",
+            "google/gemini-flash-1.5" to "Gemini Flash 1.5",
+            "google/gemini-pro-1.5" to "Gemini Pro 1.5"
+        )
+    }
     
     // Check network connectivity (Issue #116 & #118 & #119)
     LaunchedEffect(Unit) {
@@ -109,13 +122,49 @@ fun ChatScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(uiState.conversationTitle) },
+                title = { 
+                    Column {
+                        Text(uiState.conversationTitle)
+                        Text(
+                            text = availableModels.find { it.first == uiState.selectedModel }?.second ?: uiState.selectedModel,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                },
                 navigationIcon = {
                     IconButton(onClick = onBackClicked) {
                         Icon(Icons.Default.ArrowBack, contentDescription = stringResource(R.string.back))
                     }
                 },
                 actions = {
+                    // Selector de modelo
+                    IconButton(onClick = { showModelMenu = true }) {
+                        Icon(Icons.Default.MoreVert, contentDescription = "Seleccionar modelo")
+                    }
+                    DropdownMenu(
+                        expanded = showModelMenu,
+                        onDismissRequest = { showModelMenu = false }
+                    ) {
+                        availableModels.forEach { (modelId, modelName) ->
+                            DropdownMenuItem(
+                                text = { 
+                                    Text(
+                                        text = modelName,
+                                        color = if (modelId == uiState.selectedModel) 
+                                            MaterialTheme.colorScheme.primary 
+                                        else 
+                                            MaterialTheme.colorScheme.onSurface
+                                    )
+                                },
+                                onClick = {
+                                    viewModel.changeModel(modelId)
+                                    showModelMenu = false
+                                }
+                            )
+                        }
+                    }
+                    
                     IconButton(onClick = { viewModel.showStatistics() }) {
                         Icon(Icons.Default.Info, contentDescription = "Estadísticas")
                     }

@@ -17,7 +17,7 @@ class StreamAiResponseUseCase @Inject constructor(
     suspend operator fun invoke(
         userMessage: Message,
         apiKey: String,
-        model: String = "openai/gpt-3.5-turbo"
+        model: String = "google/gemini-2.0-flash-exp:free"
     ): Flow<StreamChunk> {
         return flow {
             try {

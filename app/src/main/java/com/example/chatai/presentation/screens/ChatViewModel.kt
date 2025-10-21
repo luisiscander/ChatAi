@@ -371,21 +371,18 @@ class ChatViewModel @Inject constructor(
                 isLoadingMoreMessages = true
             )
 
+            // Issue #131: Updated to use new pagination API
             val result = getMessagesWithPaginationUseCase(
                 conversationId = _uiState.value.conversationId,
-                offset = _uiState.value.messages.size,
-                limit = 20
+                limit = 50
             )
 
             when (result) {
                 is GetMessagesWithPaginationResult.Success -> {
-                    val currentMessages = _uiState.value.messages.toMutableList()
-                    currentMessages.addAll(0, result.messages)
-
                     _uiState.value = _uiState.value.copy(
-                        messages = currentMessages,
+                        messages = result.messages,
                         isLoadingMoreMessages = false,
-                        hasMoreMessages = result.messages.size >= 20
+                        hasMoreMessages = result.hasMore
                     )
                 }
                 is GetMessagesWithPaginationResult.Error -> {

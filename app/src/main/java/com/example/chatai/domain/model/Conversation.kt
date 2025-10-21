@@ -10,6 +10,7 @@ data class Conversation(
     val lastActivity: Date,
     val isArchived: Boolean = false,
     val isFavorite: Boolean = false,
+    val isPrivate: Boolean = false, // Issue #138: Private conversations with PIN
     val createdAt: Date,
     val updatedAt: Date
 )

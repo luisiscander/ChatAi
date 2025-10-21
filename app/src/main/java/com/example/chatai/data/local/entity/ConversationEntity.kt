@@ -14,6 +14,7 @@ data class ConversationEntity(
     val lastActivity: Long, // Timestamp
     val isArchived: Boolean = false,
     val isFavorite: Boolean = false,
+    val isPrivate: Boolean = false, // Issue #138: Private conversations
     val createdAt: Long, // Timestamp
     val updatedAt: Long // Timestamp
 ) {
@@ -26,6 +27,7 @@ data class ConversationEntity(
             lastActivity = Date(lastActivity),
             isArchived = isArchived,
             isFavorite = isFavorite,
+            isPrivate = isPrivate, // Issue #138
             createdAt = Date(createdAt),
             updatedAt = Date(updatedAt)
         )
@@ -41,6 +43,7 @@ data class ConversationEntity(
                 lastActivity = conversation.lastActivity.time,
                 isArchived = conversation.isArchived,
                 isFavorite = conversation.isFavorite,
+                isPrivate = conversation.isPrivate, // Issue #138
                 createdAt = conversation.createdAt.time,
                 updatedAt = conversation.updatedAt.time
             )

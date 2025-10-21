@@ -36,6 +36,7 @@ class ConversationRepositoryImpl @Inject constructor(
             lastActivity = Date(),
             isArchived = false,
             isFavorite = false,
+            isPrivate = false, // Issue #138: Initialize as non-private
             createdAt = Date(),
             updatedAt = Date()
         )

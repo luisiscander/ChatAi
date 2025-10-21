@@ -49,12 +49,15 @@ class UserPreferencesRepositoryImpl @Inject constructor(
     // Issue #134 & #135: Encrypt API Key before storing
     override suspend fun setApiKey(apiKey: String): Unit = withContext(Dispatchers.IO) {
         try {
-            // Issue #134: Encrypt using Android Keystore
-            val encryptedKey = EncryptionHelper.encrypt(apiKey)
-            sharedPreferences.edit().putString(KEY_API_KEY, encryptedKey).apply()
+            // TEMPORAL: Guardar sin encriptar para debugging del error 401
+            // TODO: Restaurar encriptación una vez resuelto el problema
+            sharedPreferences.edit().putString(KEY_API_KEY, apiKey).apply()
             
-            // Issue #135: Never log the actual API key
-            Log.d(TAG, "API Key saved successfully (encrypted)")
+            // Verificar que se guardó correctamente
+            val saved = sharedPreferences.getString(KEY_API_KEY, null)
+            Log.d(TAG, "API Key saved successfully - Length: ${apiKey.length}")
+            Log.d(TAG, "API Key verified in storage - Length: ${saved?.length ?: 0}")
+            Log.d(TAG, "API Key masked: ${EncryptionHelper.maskForLogging(apiKey)}")
         } catch (e: Exception) {
             // Issue #135: Log error without exposing the key
             Log.e(TAG, "Failed to save API Key: ${e.message}")
@@ -66,19 +69,21 @@ class UserPreferencesRepositoryImpl @Inject constructor(
     override suspend fun getApiKey(): String? = withContext(Dispatchers.IO) {
         try {
             // Priority: 1. User-provided API key, 2. Default API key from config
-            val encryptedUserApiKey = sharedPreferences.getString(KEY_API_KEY, null)
+            val userApiKey = sharedPreferences.getString(KEY_API_KEY, null)
             
             when {
-                !encryptedUserApiKey.isNullOrBlank() -> {
-                    // Issue #134: Decrypt the stored API key
-                    val decryptedKey = EncryptionHelper.decrypt(encryptedUserApiKey)
-                    // Issue #135: Never log the actual key
-                    Log.d(TAG, "API Key retrieved: ${EncryptionHelper.maskForLogging(decryptedKey)}")
-                    decryptedKey
+                !userApiKey.isNullOrBlank() -> {
+                    // TEMPORAL: Leer sin desencriptar para debugging del error 401
+                    // TODO: Restaurar desencriptación una vez resuelto el problema
+                    Log.d(TAG, "API Key retrieved from storage - Length: ${userApiKey.length}")
+                    Log.d(TAG, "API Key masked: ${EncryptionHelper.maskForLogging(userApiKey)}")
+                    Log.d(TAG, "API Key starts with: ${userApiKey.take(8)}")
+                    userApiKey
                 }
                 !ApiConfig.DEFAULT_API_KEY.isNullOrBlank() -> {
                     // Issue #135: Mask default API key in logs
                     Log.d(TAG, "Using default API Key: ${EncryptionHelper.maskForLogging(ApiConfig.DEFAULT_API_KEY)}")
+                    Log.w(TAG, "WARNING: Using hardcoded default API key - configure your own key in settings")
                     ApiConfig.DEFAULT_API_KEY
                 }
                 else -> {
@@ -89,7 +94,8 @@ class UserPreferencesRepositoryImpl @Inject constructor(
         } catch (e: Exception) {
             // Issue #135: Log error without exposing keys
             Log.e(TAG, "Failed to retrieve API Key: ${e.message}")
-            // Fallback to default if decryption fails
+            // Fallback to default if retrieval fails
+            Log.w(TAG, "Falling back to default API Key")
             ApiConfig.DEFAULT_API_KEY
         }
     }

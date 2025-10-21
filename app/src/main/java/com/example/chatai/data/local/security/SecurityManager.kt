@@ -2,10 +2,6 @@ package com.example.chatai.data.local.security
 
 import android.content.Context
 import android.content.SharedPreferences
-import androidx.biometric.BiometricManager
-import androidx.biometric.BiometricPrompt
-import androidx.core.content.ContextCompat
-import androidx.fragment.app.FragmentActivity
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import javax.inject.Inject
@@ -80,13 +76,12 @@ class SecurityManager @Inject constructor(
         updateActivityTime()
     }
     
-    // Issue #137: Check if biometric is available
+    // Issue #137: Check if biometric is available (placeholder)
+    // Full biometric implementation would require androidx.biometric dependency
     fun isBiometricAvailable(): Boolean {
-        val biometricManager = BiometricManager.from(context)
-        return when (biometricManager.canAuthenticate(BiometricManager.Authenticators.BIOMETRIC_STRONG)) {
-            BiometricManager.BIOMETRIC_SUCCESS -> true
-            else -> false
-        }
+        // Placeholder: returns false for now
+        // In production, use BiometricManager.from(context).canAuthenticate()
+        return false
     }
     
     // Issue #138-141: PIN Management

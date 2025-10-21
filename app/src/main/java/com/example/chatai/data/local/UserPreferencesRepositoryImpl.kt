@@ -17,16 +17,13 @@ import javax.inject.Singleton
 class UserPreferencesRepositoryImpl @Inject constructor(
     @ApplicationContext private val context: Context
 ) : UserPreferencesRepository {
-    
-    companion object {
-        private const val TAG = "UserPrefsRepo"
-    }
 
     private val sharedPreferences: SharedPreferences by lazy {
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
     }
 
     companion object {
+        private const val TAG = "UserPrefsRepo"
         private const val PREFS_NAME = "chat_ai_preferences"
         private const val KEY_FIRST_TIME_USER = "first_time_user"
         private const val KEY_API_KEY = "api_key"

@@ -47,10 +47,39 @@ class StreamAiResponseUseCase @Inject constructor(
                     Log.e("StreamAiResponse", "Error body: $errorBody")
                     
                     val errorMessage = when (response.code()) {
-                        401 -> "Error de autenticación (401). Verifica tu API Key en configuración."
-                        403 -> "Acceso denegado (403). Este modelo puede no estar disponible con tu API key."
-                        429 -> "Límite de solicitudes excedido (429). Intenta más tarde."
-                        else -> "Error: ${response.code()} - ${response.message()}"
+                        401 -> "❌ Error de autenticación (401)\n\n" +
+                                "Tu API Key no es válida o ha expirado.\n" +
+                                "Ve a Configuración → Gestionar API Key para actualizarla.\n" +
+                                "Obtén una nueva en: https://openrouter.ai/keys"
+                        
+                        403 -> "🚫 Acceso denegado (403)\n\n" +
+                                "Este modelo ($model) no está disponible con tu plan actual.\n" +
+                                "Prueba cambiando a un modelo gratuito:\n" +
+                                "• Gemini 2.0 Flash Free\n" +
+                                "• Gemini Exp 1206 Free"
+                        
+                        429 -> {
+                            // Parse retry-after header if available
+                            val retryAfter = response.headers()["retry-after"]
+                            val waitTime = retryAfter?.toIntOrNull() ?: 60
+                            
+                            "⏱️ Límite de solicitudes excedido (429)\n\n" +
+                                "Has alcanzado el límite de requests por minuto.\n" +
+                                "Espera ${waitTime} segundos y vuelve a intentar.\n\n" +
+                                "💡 Consejos:\n" +
+                                "• Los modelos gratuitos tienen límites estrictos\n" +
+                                "• Espera unos minutos entre mensajes\n" +
+                                "• Considera usar modelos de pago para mayor capacidad\n\n" +
+                                "Más info: https://openrouter.ai/docs#limits"
+                        }
+                        
+                        500, 502, 503, 504 -> "🔧 Error del servidor (${response.code()})\n\n" +
+                                "OpenRouter está experimentando problemas.\n" +
+                                "Esto es temporal, intenta de nuevo en unos minutos."
+                        
+                        else -> "❌ Error ${response.code()}\n\n" +
+                                "${response.message()}\n\n" +
+                                "Detalles: ${errorBody?.take(200) ?: "Sin información adicional"}"
                     }
                     
                     emit(StreamChunk.Error(errorMessage))

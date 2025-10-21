@@ -1,9 +1,10 @@
 package com.example.chatai.config
 
 object ApiConfig {
-    // Default API key - can be overridden by user input
-    // TODO: Replace with your VALID API key from https://openrouter.ai/keys
-    const val DEFAULT_API_KEY = "TU_NUEVA_API_KEY_AQUI"
+    // No default API key for security reasons
+    // Users MUST configure their own API key from https://openrouter.ai/keys
+    // Go to Settings -> Manage API Key in the app to configure
+    val DEFAULT_API_KEY: String? = null
     
     // OpenRouter API endpoints
     const val OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1/"
@@ -11,7 +12,7 @@ object ApiConfig {
     const val OPENROUTER_CHAT_ENDPOINT = "chat/completions"
     
     // API configuration
-    const val DEFAULT_MODEL = "gpt-4"
+    const val DEFAULT_MODEL = "google/gemini-2.0-flash-exp:free"
     const val MAX_TOKENS = 4000
     const val TEMPERATURE = 0.7
 }

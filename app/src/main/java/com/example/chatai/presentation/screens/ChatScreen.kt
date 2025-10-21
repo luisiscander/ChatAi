@@ -123,12 +123,19 @@ fun ChatScreen(
         topBar = {
             TopAppBar(
                 title = { 
-                    Column {
-                        Text(uiState.conversationTitle)
+                    Column(
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(
+                            text = uiState.conversationTitle,
+                            style = MaterialTheme.typography.titleMedium,
+                            maxLines = 1
+                        )
                         Text(
                             text = availableModels.find { it.first == uiState.selectedModel }?.second ?: uiState.selectedModel,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 1
                         )
                     }
                 },

@@ -1,5 +1,6 @@
 package com.example.chatai.domain.usecase
 
+import android.util.Log
 import com.example.chatai.data.remote.api.OpenRouterApiService
 import com.example.chatai.data.remote.dto.ChatCompletionRequest
 import com.example.chatai.data.remote.dto.ChatCompletionResponse
@@ -32,13 +33,27 @@ class StreamAiResponseUseCase @Inject constructor(
                     stream = true
                 )
                 
+                Log.d("StreamAiResponse", "Sending request to model: $model")
+                Log.d("StreamAiResponse", "API Key length: ${apiKey.length}")
+                
                 val response = apiService.createChatCompletion(
                     authorization = "Bearer $apiKey",
                     request = request
                 )
                 
                 if (!response.isSuccessful) {
-                    emit(StreamChunk.Error("Error: ${response.code()} - ${response.message()}"))
+                    val errorBody = response.errorBody()?.string()
+                    Log.e("StreamAiResponse", "Error ${response.code()}: ${response.message()}")
+                    Log.e("StreamAiResponse", "Error body: $errorBody")
+                    
+                    val errorMessage = when (response.code()) {
+                        401 -> "Error de autenticación (401). Verifica tu API Key en configuración."
+                        403 -> "Acceso denegado (403). Este modelo puede no estar disponible con tu API key."
+                        429 -> "Límite de solicitudes excedido (429). Intenta más tarde."
+                        else -> "Error: ${response.code()} - ${response.message()}"
+                    }
+                    
+                    emit(StreamChunk.Error(errorMessage))
                     return@flow
                 }
                 

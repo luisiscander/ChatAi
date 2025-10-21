@@ -7,11 +7,17 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface ConversationDao {
     // Issue #126: Order favorites first, then by date
+    @Query("SELECT * FROM conversations ORDER BY isFavorite DESC, lastActivity DESC")
+    fun getAllConversations(): Flow<List<ConversationEntity>>
+    
     @Query("SELECT * FROM conversations WHERE isArchived = :isArchived ORDER BY isFavorite DESC, lastActivity DESC")
     fun getConversationsByArchivedStatus(isArchived: Boolean): Flow<List<ConversationEntity>>
     
     @Query("SELECT * FROM conversations WHERE id = :id")
     fun getConversationById(id: String): Flow<ConversationEntity?>
+    
+    @Query("SELECT * FROM conversations WHERE id = :id")
+    suspend fun getConversationByIdOnce(id: String): ConversationEntity?
     
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertConversation(conversation: ConversationEntity)
@@ -19,11 +25,8 @@ interface ConversationDao {
     @Update
     suspend fun updateConversation(conversation: ConversationEntity)
     
-    @Delete
-    suspend fun deleteConversation(conversation: ConversationEntity)
-    
     @Query("DELETE FROM conversations WHERE id = :id")
-    suspend fun deleteConversationById(id: String)
+    suspend fun deleteConversation(id: String)
     
     @Query("UPDATE conversations SET isArchived = 1 WHERE id = :id")
     suspend fun archiveConversation(id: String)

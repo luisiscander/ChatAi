@@ -47,7 +47,7 @@ class UserPreferencesRepositoryImpl @Inject constructor(
     }
 
     // Issue #134 & #135: Encrypt API Key before storing
-    override suspend fun setApiKey(apiKey: String) = withContext(Dispatchers.IO) {
+    override suspend fun setApiKey(apiKey: String): Unit = withContext(Dispatchers.IO) {
         try {
             // Issue #134: Encrypt using Android Keystore
             val encryptedKey = EncryptionHelper.encrypt(apiKey)

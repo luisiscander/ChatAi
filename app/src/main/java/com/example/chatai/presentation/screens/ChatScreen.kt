@@ -11,6 +11,7 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Send
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -35,6 +36,7 @@ fun ChatScreen(
     conversationId: String,
     onBackClicked: () -> Unit,
     onNavigateToExportConversation: () -> Unit = {},
+    onNavigateToModelComparison: () -> Unit = {},
     modifier: Modifier = Modifier,
     viewModel: ChatViewModel = hiltViewModel()
 ) {
@@ -85,6 +87,9 @@ fun ChatScreen(
                     }
                 },
                 actions = {
+                    IconButton(onClick = onNavigateToModelComparison) {
+                        Icon(Icons.Default.Star, contentDescription = stringResource(R.string.comparison_mode))
+                    }
                     IconButton(onClick = onNavigateToExportConversation) {
                         Icon(Icons.Default.Share, contentDescription = stringResource(R.string.export_conversation))
                     }

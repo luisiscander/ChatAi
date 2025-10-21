@@ -48,11 +48,29 @@ fun ChatScreen(
     var showDeleteDialog by remember { mutableStateOf(false) }
     var messageToDelete by remember { mutableStateOf<Message?>(null) }
     var isOnline by remember { mutableStateOf(true) }
+    var wasOffline by remember { mutableStateOf(false) }
+    var showReconnectedMessage by remember { mutableStateOf(false) }
+    var isSyncing by remember { mutableStateOf(false) }
     
-    // Check network connectivity (Issue #116)
+    // Check network connectivity (Issue #116 & #118 & #119)
     LaunchedEffect(Unit) {
         while (true) {
-            isOnline = viewModel.checkNetworkConnection()
+            val currentlyOnline = viewModel.checkNetworkConnection()
+            
+            // Issue #118 & #119: Detectar reconexión y sincronizar
+            if (!isOnline && currentlyOnline) {
+                isSyncing = true
+                showReconnectedMessage = true
+                wasOffline = false
+                kotlinx.coroutines.delay(1500) // Mostrar sincronización
+                isSyncing = false
+                kotlinx.coroutines.delay(1500) // Mostrar mensaje de reconexión
+                showReconnectedMessage = false
+            } else if (isOnline && !currentlyOnline) {
+                wasOffline = true
+            }
+            
+            isOnline = currentlyOnline
             kotlinx.coroutines.delay(5000) // Check every 5 seconds
         }
     }
@@ -104,8 +122,9 @@ fun ChatScreen(
                     IconButton(onClick = onNavigateToModelComparison) {
                         Icon(Icons.Default.Star, contentDescription = stringResource(R.string.comparison_mode))
                     }
-                    IconButton(onClick = onNavigateToExportConversation) {
-                        Icon(Icons.Default.Share, contentDescription = stringResource(R.string.export_conversation))
+                    // Issue #121: Compartir conversación completa
+                    IconButton(onClick = { viewModel.shareConversation(context) }) {
+                        Icon(Icons.Default.Share, contentDescription = "Compartir conversación")
                     }
                 }
             )
@@ -114,25 +133,102 @@ fun ChatScreen(
         Column(
             modifier = modifier.fillMaxSize()
         ) {
-            // Offline indicator (Issue #116)
-            if (!isOnline) {
+            // Offline/Reconnected indicator (Issue #116, #118 & #119)
+            when {
+                isSyncing -> {
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        color = MaterialTheme.colorScheme.secondaryContainer
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(8.dp),
+                            horizontalArrangement = Arrangement.Center,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(16.dp),
+                                strokeWidth = 2.dp
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "Sincronizando...",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSecondaryContainer,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+                }
+                showReconnectedMessage -> {
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        color = MaterialTheme.colorScheme.primaryContainer
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(8.dp),
+                            horizontalArrangement = Arrangement.Center,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "Conexión restablecida",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+                }
+                !isOnline -> {
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        color = MaterialTheme.colorScheme.errorContainer
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(8.dp),
+                            horizontalArrangement = Arrangement.Center,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "Sin conexión",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onErrorContainer,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+                }
+            }
+            
+            // Show draft send option when reconnected (Issue #118)
+            if (isOnline && uiState.hasDraft && uiState.messageText.isNotBlank()) {
                 Surface(
                     modifier = Modifier.fillMaxWidth(),
-                    color = MaterialTheme.colorScheme.errorContainer
+                    color = MaterialTheme.colorScheme.secondaryContainer
                 ) {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(8.dp),
-                        horizontalArrangement = Arrangement.Center,
+                        horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = "Sin conexión",
+                            text = "Tienes un borrador guardado",
                             style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onErrorContainer,
-                            fontWeight = FontWeight.Bold
+                            color = MaterialTheme.colorScheme.onSecondaryContainer
                         )
+                        Button(
+                            onClick = { viewModel.sendMessage() },
+                            modifier = Modifier.padding(start = 8.dp)
+                        ) {
+                            Text("Enviar ahora", style = MaterialTheme.typography.labelSmall)
+                        }
                     }
                 }
             }
@@ -171,6 +267,7 @@ fun ChatScreen(
                                 messageToDelete = message
                                 showDeleteDialog = true
                             },
+                            onShareMessage = { viewModel.shareMessage(context, message) },
                             modifier = Modifier.fillMaxWidth()
                         )
                     }
@@ -316,6 +413,27 @@ fun ChatScreen(
                 }
             )
         }
+        
+        // Draft save option dialog (Issue #117)
+        if (uiState.showDraftSaveOption) {
+            AlertDialog(
+                onDismissRequest = { viewModel.dismissDraftOption() },
+                title = { Text("Sin conexión a internet") },
+                text = { 
+                    Text("No se puede enviar el mensaje sin conexión. ¿Deseas guardar el mensaje como borrador?")
+                },
+                confirmButton = {
+                    TextButton(onClick = { viewModel.saveAsDraft() }) {
+                        Text("Guardar como borrador")
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { viewModel.dismissDraftOption() }) {
+                        Text("Cancelar")
+                    }
+                }
+            )
+        }
     }
 }
 
@@ -324,6 +442,7 @@ fun MessageBubble(
     message: Message,
     onCopyMessage: (String) -> Unit = {},
     onDeleteMessage: (String) -> Unit = {},
+    onShareMessage: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val isUserMessage = message.isFromUser
@@ -392,6 +511,16 @@ fun MessageBubble(
                     showContextMenu = false
                 }
             )
+            // Issue #120: Compartir mensaje (solo para asistente)
+            if (!isUserMessage) {
+                DropdownMenuItem(
+                    text = { Text("Compartir") },
+                    onClick = {
+                        onShareMessage()
+                        showContextMenu = false
+                    }
+                )
+            }
             // Issue #69: Eliminar mensaje propio
             if (isUserMessage) {
                 DropdownMenuItem(

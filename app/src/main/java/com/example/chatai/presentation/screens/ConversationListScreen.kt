@@ -101,8 +101,21 @@ fun ConversationListScreen(
                         IconButton(onClick = { showSearch = true }) {
                             Icon(Icons.Default.Search, contentDescription = stringResource(R.string.search))
                         }
-                        IconButton(onClick = onShowArchived) {
-                            Icon(Icons.Default.Star, contentDescription = stringResource(R.string.view_archived))
+                        // Issue #124: Ver solo favoritas
+                        IconButton(
+                            onClick = {
+                                if (uiState.showFavoritesOnly) {
+                                    viewModel.showAllConversations()
+                                } else {
+                                    viewModel.loadFavorites()
+                                }
+                            }
+                        ) {
+                            Icon(
+                                Icons.Default.Star,
+                                contentDescription = if (uiState.showFavoritesOnly) "Ver todas" else "Ver favoritas",
+                                tint = if (uiState.showFavoritesOnly) MaterialTheme.colorScheme.primary else LocalContentColor.current
+                            )
                         }
                         
                         // Settings menu
@@ -199,7 +212,8 @@ fun ConversationListScreen(
                                     ConversationItem(
                                         conversation = conversation,
                                         onClick = { onConversationClick(conversation.id) },
-                                        onArchive = { viewModel.archiveConversation(conversation.id) }
+                                        onArchive = { viewModel.archiveConversation(conversation.id) },
+                                        onToggleFavorite = { viewModel.toggleFavorite(conversation.id) }
                                     )
                                 }
                             }
@@ -235,7 +249,8 @@ fun ConversationListScreen(
                         ConversationItem(
                             conversation = conversation,
                             onClick = { onConversationClick(conversation.id) },
-                            onArchive = { viewModel.archiveConversation(conversation.id) }
+                            onArchive = { viewModel.archiveConversation(conversation.id) },
+                            onToggleFavorite = { viewModel.toggleFavorite(conversation.id) }
                         )
                     }
                 }
@@ -366,6 +381,7 @@ fun ConversationItem(
     conversation: com.example.chatai.domain.model.Conversation,
     onClick: () -> Unit,
     onArchive: () -> Unit,
+    onToggleFavorite: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val modelType = ModelType.fromModelId(conversation.model)
@@ -427,9 +443,13 @@ fun ConversationItem(
                 )
             }
             
-            // Botón de archivar
-            IconButton(onClick = onArchive) {
-                Icon(Icons.Default.Star, contentDescription = stringResource(R.string.archive))
+            // Issue #123 & #125: Botón de favorito
+            IconButton(onClick = onToggleFavorite) {
+                Icon(
+                    Icons.Default.Star,
+                    contentDescription = if (conversation.isFavorite) "Quitar de favoritos" else "Agregar a favoritos",
+                    tint = if (conversation.isFavorite) Color.Yellow else MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
         }
     }

@@ -14,6 +14,8 @@ interface ConversationRepository {
     suspend fun deleteConversation(id: String)
     suspend fun archiveConversation(id: String)
     suspend fun unarchiveConversation(id: String)
+    suspend fun toggleFavorite(id: String)
+    fun getFavoriteConversations(): Flow<List<Conversation>>
     
     // Mensajes
     fun getMessagesByConversationId(conversationId: String): Flow<List<Message>>

@@ -21,4 +21,9 @@ interface UserPreferencesRepository {
     // Usage limit preferences
     suspend fun getMonthlyUsageLimit(): Double?
     suspend fun setMonthlyUsageLimit(limit: Double)
+    
+    // Draft preferences
+    suspend fun saveDraft(conversationId: String, draftText: String)
+    suspend fun getDraft(conversationId: String): String?
+    suspend fun clearDraft(conversationId: String)
 }

@@ -28,6 +28,11 @@ class ChatViewModel @Inject constructor(
     private val validateApiKeyConnectionUseCase: ValidateApiKeyConnectionUseCase,
     private val getConversationStatisticsUseCase: GetConversationStatisticsUseCase,
     private val checkUsageLimitUseCase: CheckUsageLimitUseCase,
+    private val saveMessageDraftUseCase: SaveMessageDraftUseCase,
+    private val getMessageDraftUseCase: GetMessageDraftUseCase,
+    private val clearMessageDraftUseCase: ClearMessageDraftUseCase,
+    private val shareMessageUseCase: ShareMessageUseCase,
+    private val shareConversationUseCase: ShareConversationUseCase,
     private val userPreferencesRepository: UserPreferencesRepository
 ) : ViewModel() {
 
@@ -64,10 +69,12 @@ class ChatViewModel @Inject constructor(
 
         viewModelScope.launch {
             try {
+                // Issue #117: Verificar conexión antes de enviar
                 if (!checkNetworkConnectionUseCase()) {
                     _uiState.value = _uiState.value.copy(
                         error = "Sin conexión a internet",
-                        messageText = currentText
+                        messageText = currentText,
+                        showDraftSaveOption = true
                     )
                     return@launch
                 }
@@ -178,6 +185,9 @@ class ChatViewModel @Inject constructor(
                                         isEnabled = true,
                                         error = null
                                     )
+                                    
+                                    // Limpiar borrador después de enviar exitosamente
+                                    clearDraft()
                                     
                                     // Check usage limit after message is sent (Issue #115)
                                     checkUsageLimit()
@@ -325,6 +335,8 @@ class ChatViewModel @Inject constructor(
     fun initializeConversation(conversationId: String) {
         if (_uiState.value.conversationId != conversationId) {
             loadConversationHistory(conversationId)
+            // Issue #117: Cargar borrador si existe
+            loadDraft(conversationId)
         }
     }
 
@@ -451,6 +463,97 @@ class ChatViewModel @Inject constructor(
     fun checkNetworkConnection(): Boolean {
         return checkNetworkConnectionUseCase()
     }
+    
+    // Issue #117: Guardar mensaje como borrador
+    fun saveAsDraft() {
+        viewModelScope.launch {
+            try {
+                val result = saveMessageDraftUseCase(_uiState.value.conversationId, _uiState.value.messageText)
+                when (result) {
+                    is SaveDraftResult.Success -> {
+                        _uiState.value = _uiState.value.copy(
+                            showDraftSaveOption = false,
+                            error = null,
+                            copySuccessMessage = "Borrador guardado"
+                        )
+                        kotlinx.coroutines.delay(2000)
+                        _uiState.value = _uiState.value.copy(copySuccessMessage = null)
+                    }
+                    is SaveDraftResult.Error -> {
+                        _uiState.value = _uiState.value.copy(
+                            error = result.message
+                        )
+                    }
+                }
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(
+                    error = "Error al guardar borrador"
+                )
+            }
+        }
+    }
+    
+    // Cargar borrador guardado
+    private fun loadDraft(conversationId: String) {
+        viewModelScope.launch {
+            try {
+                val draft = getMessageDraftUseCase(conversationId)
+                if (!draft.isNullOrEmpty()) {
+                    _uiState.value = _uiState.value.copy(
+                        messageText = draft,
+                        hasDraft = true
+                    )
+                }
+            } catch (e: Exception) {
+                // Silent fail
+            }
+        }
+    }
+    
+    // Limpiar borrador después de enviar
+    private fun clearDraft() {
+        viewModelScope.launch {
+            try {
+                clearMessageDraftUseCase(_uiState.value.conversationId)
+            } catch (e: Exception) {
+                // Silent fail
+            }
+        }
+    }
+    
+    fun dismissDraftOption() {
+        _uiState.value = _uiState.value.copy(showDraftSaveOption = false)
+    }
+    
+    // Issue #120: Compartir mensaje individual
+    fun shareMessage(context: android.content.Context, message: Message) {
+        val result = shareMessageUseCase(context, message.content, message.model)
+        when (result) {
+            is ShareResult.Success -> {
+                // Success, no need to show message
+            }
+            is ShareResult.Error -> {
+                _uiState.value = _uiState.value.copy(error = result.message)
+            }
+        }
+    }
+    
+    // Issue #121: Compartir conversación completa
+    fun shareConversation(context: android.content.Context) {
+        val result = shareConversationUseCase(
+            context,
+            _uiState.value.conversationTitle,
+            _uiState.value.messages
+        )
+        when (result) {
+            is ShareResult.Success -> {
+                // Success, no need to show message
+            }
+            is ShareResult.Error -> {
+                _uiState.value = _uiState.value.copy(error = result.message)
+            }
+        }
+    }
 
 }
 
@@ -474,7 +577,9 @@ data class ChatUiState(
     val hasMoreMessages: Boolean = true,
     val showStatistics: Boolean = false,
     val statistics: ConversationStatistics? = null,
-    val usageAlert: UsageAlert? = null
+    val usageAlert: UsageAlert? = null,
+    val showDraftSaveOption: Boolean = false,
+    val hasDraft: Boolean = false
 )
 
 data class UsageAlert(

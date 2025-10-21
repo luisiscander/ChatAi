@@ -21,7 +21,9 @@ class ConversationListViewModel @Inject constructor(
     private val archiveConversationUseCase: ArchiveConversationUseCase,
     private val searchConversationsUseCase: SearchConversationsUseCase,
     private val createConversationUseCase: com.example.chatai.domain.usecase.CreateConversationUseCase,
-    private val checkNetworkConnectionUseCase: com.example.chatai.domain.usecase.CheckNetworkConnectionUseCase
+    private val checkNetworkConnectionUseCase: com.example.chatai.domain.usecase.CheckNetworkConnectionUseCase,
+    private val toggleFavoriteConversationUseCase: com.example.chatai.domain.usecase.ToggleFavoriteConversationUseCase,
+    private val getFavoriteConversationsUseCase: com.example.chatai.domain.usecase.GetFavoriteConversationsUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ConversationListUiState())
@@ -115,6 +117,60 @@ class ConversationListViewModel @Inject constructor(
     fun checkNetworkConnection(): Boolean {
         return checkNetworkConnectionUseCase()
     }
+    
+    // Issue #123 & #125: Toggle favorite
+    fun toggleFavorite(conversationId: String) {
+        viewModelScope.launch {
+            try {
+                val result = toggleFavoriteConversationUseCase(conversationId)
+                when (result) {
+                    is com.example.chatai.domain.usecase.ToggleFavoriteResult.Success -> {
+                        // Reload conversations to reflect change
+                        if (_uiState.value.showFavoritesOnly) {
+                            loadFavorites()
+                        } else {
+                            loadConversations()
+                        }
+                    }
+                    is com.example.chatai.domain.usecase.ToggleFavoriteResult.Error -> {
+                        _uiState.value = _uiState.value.copy(error = result.message)
+                    }
+                }
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(error = "Error al actualizar favorito")
+            }
+        }
+    }
+    
+    // Issue #124: Load favorites only
+    fun loadFavorites() {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(
+                isLoading = true,
+                showFavoritesOnly = true
+            )
+            
+            try {
+                getFavoriteConversationsUseCase().collect { favorites ->
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        conversations = favorites,
+                        error = null
+                    )
+                }
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    error = e.message
+                )
+            }
+        }
+    }
+    
+    fun showAllConversations() {
+        _uiState.value = _uiState.value.copy(showFavoritesOnly = false)
+        loadConversations()
+    }
 }
 
 data class ConversationListUiState(
@@ -122,5 +178,6 @@ data class ConversationListUiState(
     val isLoading: Boolean = false,
     val error: String? = null,
     val searchQuery: String = "",
-    val searchResult: SearchResult? = null
+    val searchResult: SearchResult? = null,
+    val showFavoritesOnly: Boolean = false
 )

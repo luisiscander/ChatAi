@@ -9,6 +9,7 @@ data class Conversation(
     val lastMessage: String?,
     val lastActivity: Date,
     val isArchived: Boolean = false,
+    val isFavorite: Boolean = false,
     val createdAt: Date,
     val updatedAt: Date
 )

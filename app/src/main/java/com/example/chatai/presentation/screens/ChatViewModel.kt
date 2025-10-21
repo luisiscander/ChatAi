@@ -3,7 +3,6 @@ package com.example.chatai.presentation.screens
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.chatai.domain.model.Message
-import com.example.chatai.domain.repository.ConversationRepository
 import com.example.chatai.domain.repository.UserPreferencesRepository
 import com.example.chatai.domain.usecase.*
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -21,7 +20,6 @@ class ChatViewModel @Inject constructor(
     private val copyMessageUseCase: CopyMessageUseCase,
     private val deleteMessageUseCase: DeleteMessageUseCase,
     private val sendMessageUseCase: SendMessageUseCase,
-    private val getAiResponseUseCase: GetAiResponseUseCase,
     private val streamAiResponseUseCase: StreamAiResponseUseCase,
     private val cancelStreamingUseCase: CancelStreamingUseCase,
     private val getMessagesUseCase: GetMessagesUseCase,
@@ -47,7 +45,6 @@ class ChatViewModel @Inject constructor(
     fun sendMessage() {
         val currentText = _uiState.value.messageText
         
-        // Issue #57: Mensaje vacío - Validar que no esté vacío
         if (currentText.isBlank()) {
             _uiState.value = _uiState.value.copy(
                 error = "El mensaje no puede estar vacío"
@@ -58,26 +55,23 @@ class ChatViewModel @Inject constructor(
         val validationResult = validateMessageUseCase(currentText)
         if (validationResult !is MessageValidationResult.Valid) {
             _uiState.value = _uiState.value.copy(
-                error = "Mensaje inválido: ${validationResult}"
+                error = "Mensaje inválido: $validationResult"
             )
             return
         }
 
         viewModelScope.launch {
             try {
-                // Issue #55: Error al enviar mensaje sin conexión
                 if (!checkNetworkConnectionUseCase()) {
                     _uiState.value = _uiState.value.copy(
                         error = "Sin conexión a internet",
-                        messageText = currentText // Mantener el mensaje en el campo
+                        messageText = currentText
                     )
                     return@launch
                 }
 
-                // Obtener API key
                 val apiKey = userPreferencesRepository.getApiKey()
                 
-                // Issue #56: Error de API key inválida
                 if (apiKey.isNullOrEmpty()) {
                     _uiState.value = _uiState.value.copy(
                         error = "Error de autenticación. Verifica tu API key"
@@ -102,13 +96,12 @@ class ChatViewModel @Inject constructor(
                     else -> { /* API key válida, continuar */ }
                 }
 
-                // Issue #53: Enviar mensaje de texto simple
                 _uiState.value = _uiState.value.copy(
                     messageText = "",
                     validationResult = MessageValidationResult.Empty,
                     isTyping = true,
                     error = null,
-                    isEnabled = false // Deshabilitar mientras se envía
+                    isEnabled = false
                 )
 
                 val userMessage = Message(
@@ -120,19 +113,24 @@ class ChatViewModel @Inject constructor(
                     model = null
                 )
 
-                // Guardar mensaje del usuario
                 val sendResult = sendMessageUseCase(userMessage, apiKey)
                 when (sendResult) {
                     is SendMessageResult.Success -> {
                         val currentMessages = _uiState.value.messages.toMutableList()
                         currentMessages.add(userMessage)
 
+                        val newTitle = if (_uiState.value.conversationTitle == "New Conversation") {
+                            userMessage.content.take(20)
+                        } else {
+                            _uiState.value.conversationTitle
+                        }
+
                         _uiState.value = _uiState.value.copy(
                             messages = currentMessages,
-                            isTyping = true
+                            isTyping = true,
+                            conversationTitle = newTitle
                         )
 
-                        // Issue #59: Recibir respuesta con streaming exitoso
                         _uiState.value = _uiState.value.copy(
                             isStreaming = true,
                             canCancelStreaming = true,
@@ -140,10 +138,8 @@ class ChatViewModel @Inject constructor(
                             isTyping = false
                         )
 
-                        // Cancelar cualquier streaming anterior
                         cancelStreamingUseCase.reset()
 
-                        // Iniciar streaming
                         streamAiResponseUseCase(userMessage, apiKey).collect { chunk ->
                             if (cancelStreamingUseCase.isCancelled()) {
                                 return@collect
@@ -156,7 +152,6 @@ class ChatViewModel @Inject constructor(
                                     )
                                 }
                                 is StreamChunk.Complete -> {
-                                    // Guardar mensaje completo cuando termine el streaming
                                     val aiMessage = Message(
                                         id = UUID.randomUUID().toString(),
                                         conversationId = userMessage.conversationId,
@@ -195,7 +190,7 @@ class ChatViewModel @Inject constructor(
                             isTyping = false,
                             isEnabled = true,
                             error = sendResult.message,
-                            messageText = currentText // Restaurar el mensaje
+                            messageText = currentText
                         )
                     }
                 }
@@ -210,7 +205,6 @@ class ChatViewModel @Inject constructor(
         }
     }
 
-    // Issue #68: Copiar mensaje
     fun copyMessage(messageText: String) {
         val result = copyMessageUseCase(messageText)
         when (result) {
@@ -219,7 +213,6 @@ class ChatViewModel @Inject constructor(
                     error = null,
                     copySuccessMessage = "Texto copiado"
                 )
-                // Clear success message after 2 seconds
                 viewModelScope.launch {
                     kotlinx.coroutines.delay(2000)
                     _uiState.value = _uiState.value.copy(
@@ -241,7 +234,6 @@ class ChatViewModel @Inject constructor(
             val result = deleteMessageUseCase(messageId)
             when (result) {
                 is DeleteMessageResult.Success -> {
-                    // Actualizar lista de mensajes
                     val updatedMessages = _uiState.value.messages.filter { it.id != messageId }
                     _uiState.value = _uiState.value.copy(
                         messages = updatedMessages,
@@ -257,17 +249,17 @@ class ChatViewModel @Inject constructor(
         }
     }
 
-    // Issue #60: Cancelar streaming en progreso
     fun cancelStreaming() {
         cancelStreamingUseCase.cancelStreaming()
         
-        // Guardar el texto generado hasta el momento
         val streamingText = _uiState.value.streamingText
         if (streamingText.isNotEmpty()) {
             val aiMessage = Message(
                 id = UUID.randomUUID().toString(),
                 conversationId = _uiState.value.conversationId,
-                content = streamingText + "\n\n[Respuesta interrumpida]",
+                content = """$streamingText
+
+[Respuesta interrumpida]""",
                 isFromUser = false,
                 timestamp = Date(),
                 model = "gpt-4"
@@ -293,7 +285,6 @@ class ChatViewModel @Inject constructor(
         }
     }
 
-    // Issue #64: Cargar historial completo
     fun loadConversationHistory(conversationId: String) {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(
@@ -303,9 +294,15 @@ class ChatViewModel @Inject constructor(
 
             try {
                 val messages = getMessagesUseCase(conversationId).first()
+                val title = if (messages.isNotEmpty()) {
+                    messages.first().content.take(20)
+                } else {
+                    "New Conversation"
+                }
                 _uiState.value = _uiState.value.copy(
                     messages = messages,
-                    isLoadingHistory = false
+                    isLoadingHistory = false,
+                    conversationTitle = title
                 )
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(
@@ -316,21 +313,18 @@ class ChatViewModel @Inject constructor(
         }
     }
 
-    // Initialize conversation without LaunchedEffect complications
     fun initializeConversation(conversationId: String) {
         if (_uiState.value.conversationId != conversationId) {
             loadConversationHistory(conversationId)
         }
     }
 
-    // Issue #66: Scroll manual en historial
     fun onManualScroll() {
         _uiState.value = _uiState.value.copy(
             isAutoScrollEnabled = false
         )
     }
 
-    // Issue #66: Notificación de nuevo mensaje
     fun onNewMessageReceived() {
         if (!_uiState.value.isAutoScrollEnabled) {
             _uiState.value = _uiState.value.copy(
@@ -339,7 +333,6 @@ class ChatViewModel @Inject constructor(
         }
     }
 
-    // Issue #66: Volver al último mensaje
     fun scrollToLatestMessage() {
         _uiState.value = _uiState.value.copy(
             isAutoScrollEnabled = true,
@@ -347,7 +340,6 @@ class ChatViewModel @Inject constructor(
         )
     }
 
-    // Issue #67: Cargar mensajes antiguos (paginación)
     fun loadMoreMessages() {
         if (_uiState.value.isLoadingMoreMessages || !_uiState.value.hasMoreMessages) {
             return
@@ -367,7 +359,7 @@ class ChatViewModel @Inject constructor(
             when (result) {
                 is GetMessagesWithPaginationResult.Success -> {
                     val currentMessages = _uiState.value.messages.toMutableList()
-                    currentMessages.addAll(0, result.messages) // Add at beginning
+                    currentMessages.addAll(0, result.messages)
 
                     _uiState.value = _uiState.value.copy(
                         messages = currentMessages,
@@ -396,13 +388,13 @@ data class ChatUiState(
     val canCancelStreaming: Boolean = false,
     val validationResult: MessageValidationResult = MessageValidationResult.Valid,
     val isEnabled: Boolean = true,
-    val conversationId: String = "dummy_chat_id",
-    val conversationTitle: String = "Chat",
+    val conversationId: String = "",
+    val conversationTitle: String = "New Conversation",
     val error: String? = null,
+    val copySuccessMessage: String? = null,
     val isLoadingHistory: Boolean = false,
-    val isLoadingMoreMessages: Boolean = false,
-    val hasMoreMessages: Boolean = true,
     val isAutoScrollEnabled: Boolean = true,
     val showNewMessageNotification: Boolean = false,
-    val copySuccessMessage: String? = null
+    val isLoadingMoreMessages: Boolean = false,
+    val hasMoreMessages: Boolean = true
 )

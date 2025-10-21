@@ -44,10 +44,10 @@ fun ChatScreen(
     var showDeleteDialog by remember { mutableStateOf(false) }
     var messageToDelete by remember { mutableStateOf<Message?>(null) }
     
-    // Load conversation history when screen opens - simplified approach
-    LaunchedEffect(Unit) {
+    // Load conversation history when screen opens
+    LaunchedEffect(conversationId) {
         if (conversationId.isNotEmpty()) {
-            viewModel.loadConversationHistory(conversationId)
+            viewModel.initializeConversation(conversationId)
         }
     }
     

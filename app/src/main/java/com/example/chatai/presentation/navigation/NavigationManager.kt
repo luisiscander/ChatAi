@@ -5,14 +5,11 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
-import com.example.chatai.domain.usecase.OnboardingStatus
 import com.example.chatai.presentation.screens.ApiKeySetupScreen
 import com.example.chatai.presentation.screens.ChatScreen
 import com.example.chatai.presentation.screens.ConversationListScreen
 import com.example.chatai.presentation.screens.DefaultModelSettingsScreen
 import com.example.chatai.presentation.screens.ExportConversationScreen
-import com.example.chatai.presentation.screens.MainScreen
 import com.example.chatai.presentation.screens.OnboardingScreen
 import com.example.chatai.presentation.screens.SplashScreen
 import com.example.chatai.presentation.screens.ThemeSettingsScreen
@@ -32,29 +29,14 @@ object Routes {
 
 @Composable
 fun NavigationManager(
-    onboardingStatus: OnboardingStatus?,
-    isLoading: Boolean,
+    navController: NavHostController,
     onContinueClicked: () -> Unit,
     onApiKeyConfigured: () -> Unit,
-    onNavigateToThemeSettings: () -> Unit = {},
-    onNavigateToDefaultModelSettings: () -> Unit = {},
-    onNavigateToExportConversation: (String) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
-    val navController = rememberNavController()
-    
-    // Determine initial route based on onboarding status
-    val startRoute = when {
-        isLoading -> Routes.SPLASH
-        onboardingStatus == OnboardingStatus.ShowOnboarding -> Routes.ONBOARDING
-        onboardingStatus == OnboardingStatus.ShowApiKeySetup -> Routes.API_KEY_SETUP
-        onboardingStatus == OnboardingStatus.ShowMainApp -> Routes.CONVERSATION_LIST
-        else -> Routes.SPLASH
-    }
-    
     NavHost(
         navController = navController,
-        startDestination = startRoute,
+        startDestination = Routes.SPLASH,
         modifier = modifier
     ) {
         composable(Routes.SPLASH) {
@@ -63,20 +45,14 @@ fun NavigationManager(
         
         composable(Routes.ONBOARDING) {
             OnboardingScreen(
-                onContinueClicked = {
-                    onContinueClicked()
-                    navController.navigate(Routes.API_KEY_SETUP)
-                },
+                onContinueClicked = onContinueClicked,
                 modifier = modifier
             )
         }
         
         composable(Routes.API_KEY_SETUP) {
             ApiKeySetupScreen(
-                onApiKeyConfigured = {
-                    onApiKeyConfigured()
-                    navController.navigate(Routes.CONVERSATION_LIST)
-                },
+                onApiKeyConfigured = onApiKeyConfigured,
                 modifier = modifier
             )
         }
@@ -110,7 +86,7 @@ fun NavigationManager(
                 onBackClicked = {
                     navController.popBackStack()
                 },
-                onNavigateToExportConversation = {
+                onNavigateToExportConversation = { 
                     navController.navigate(Routes.EXPORT_CONVERSATION.replace("{conversationId}", conversationId))
                 },
                 modifier = modifier

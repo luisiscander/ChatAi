@@ -4,19 +4,22 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import android.content.Context
+import com.example.chatai.data.local.dao.AiModelDao
 import com.example.chatai.data.local.dao.ConversationDao
 import com.example.chatai.data.local.dao.MessageDao
+import com.example.chatai.data.local.entity.AiModelEntity
 import com.example.chatai.data.local.entity.ConversationEntity
 import com.example.chatai.data.local.entity.MessageEntity
 
 @Database(
-    entities = [ConversationEntity::class, MessageEntity::class],
-    version = 3,
+    entities = [ConversationEntity::class, MessageEntity::class, AiModelEntity::class],
+    version = 4, // Issue #127: Added AiModelEntity for caching
     exportSchema = false
 )
 abstract class ChatDatabase : RoomDatabase() {
     abstract fun conversationDao(): ConversationDao
     abstract fun messageDao(): MessageDao
+    abstract fun aiModelDao(): AiModelDao // Issue #127: DAO for model caching
     
     companion object {
         @Volatile

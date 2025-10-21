@@ -14,7 +14,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class ModelListViewModel @Inject constructor(
-    private val getAvailableModelsUseCase: GetAvailableModelsUseCase
+    private val getAvailableModelsUseCase: GetAvailableModelsUseCase,
+    private val refreshModelsUseCase: com.example.chatai.domain.usecase.RefreshModelsUseCase // Issue #130
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ModelListUiState())
@@ -47,11 +48,38 @@ class ModelListViewModel @Inject constructor(
         }
     }
 
+    // Issue #130: Pull-to-refresh implementation
     fun refreshModels() {
-        loadModels()
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isRefreshing = true)
+            
+            try {
+                val refreshResult = refreshModelsUseCase()
+                when (refreshResult) {
+                    is com.example.chatai.domain.usecase.RefreshModelsResult.Success -> {
+                        // Reload models after successful refresh
+                        loadModels()
+                    }
+                    is com.example.chatai.domain.usecase.RefreshModelsResult.Error -> {
+                        _uiState.value = _uiState.value.copy(
+                            result = GetModelsResult.Error(refreshResult.message),
+                            isRefreshing = false
+                        )
+                    }
+                }
+            } catch (exception: Exception) {
+                _uiState.value = _uiState.value.copy(
+                    result = GetModelsResult.Error(exception.message ?: "Error al actualizar"),
+                    isRefreshing = false
+                )
+            } finally {
+                _uiState.value = _uiState.value.copy(isRefreshing = false)
+            }
+        }
     }
 }
 
 data class ModelListUiState(
-    val result: GetModelsResult = GetModelsResult.Loading
+    val result: GetModelsResult = GetModelsResult.Loading,
+    val isRefreshing: Boolean = false // Issue #130: Pull-to-refresh state
 )

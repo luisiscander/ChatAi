@@ -80,4 +80,27 @@ class ConversationRepositoryImpl @Inject constructor(
     override suspend fun searchConversations(query: String): Flow<List<Conversation>> {
         return flowOf(emptyList())
     }
+    
+    // Issue #131: Get recent messages with pagination
+    override suspend fun getRecentMessages(conversationId: String, limit: Int): List<Message> {
+        // TODO: Implement with MessageDao when Room is ready
+        return emptyList()
+    }
+    
+    // Issue #132: Load older messages for infinite scroll
+    override suspend fun getMessagesBeforeTimestamp(conversationId: String, beforeTimestamp: Long, limit: Int): List<Message> {
+        // TODO: Implement with MessageDao when Room is ready
+        return emptyList()
+    }
+    
+    // Issue #133: Search in all messages
+    override suspend fun searchMessagesInConversation(conversationId: String, query: String): List<Message> {
+        // TODO: Implement with MessageDao when Room is ready
+        return emptyList()
+    }
+    
+    override suspend fun getMessageCount(conversationId: String): Int {
+        // TODO: Implement with MessageDao when Room is ready
+        return 0
+    }
 }
